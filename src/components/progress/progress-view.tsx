@@ -91,7 +91,7 @@ export function ProgressView() {
       <Card>
         <CardHeader>
           <CardTitle>總分趨勢</CardTitle>
-          <CardDescription>{rows.length > 1 ? "把滑鼠移到點上（或用 Tab）看每次的分數。" : "再練一次，就能看到趨勢線。"}</CardDescription>
+          {rows.length === 1 && <CardDescription>再練一次就能看到趨勢。</CardDescription>}
         </CardHeader>
         <CardContent>
           <TrendChart
@@ -113,9 +113,11 @@ export function ProgressView() {
               <span className="text-right font-bold tabular-nums">{avgDims[d]}</span>
             </div>
           ))}
-          <p className="flex items-center gap-1.5 pt-2 text-sm text-ink-2">
-            <Flame className="size-4 text-warn" aria-hidden />
-            下次專心練「<b className="text-ink">{DIM_LABELS[weakest].short}</b>」：{DIM_LABELS[weakest].desc}。
+          <p className="flex items-start gap-1.5 pt-2 text-sm text-ink-2">
+            <Flame className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
+            <span>
+              下次專心練「<b className="text-ink">{DIM_LABELS[weakest].short}</b>」：{DIM_LABELS[weakest].desc}。
+            </span>
           </p>
           <Button asChild size="sm" className="mt-1">
             <Link href="/setup/?again=1">再練一次</Link>
