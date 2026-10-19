@@ -142,9 +142,17 @@ export const mockProvider: InterviewAI = {
     const meta = questionMeta(question.baseId);
     const isTrap = !!(meta.trap || meta.focus);
 
-    // 暖身：只在故事題回答非常短的時候，溫和地邀請多說一點
+    // 3 分鐘暖身承諾「不追問」
+    if (config.quick) return null;
+
+    // 暖身難度：只在回答非常短的時候，依題型溫和地邀請多說一點
     if (config.difficulty === "warmup") {
-      if (len < n(25) && !isTrap && question.category !== "situational")
+      if (len >= n(25) || isTrap) return null;
+      if (question.category === "intro")
+        return en ? "No rush. Could you tell me a bit more, like what you're working on now or something you did well?" : "沒關係，慢慢來。可以多說一點嗎？例如你最近在做的事，或做得最好的一件事。";
+      if (question.category === "motivation")
+        return en ? "No rush. What do you know about us so far?" : "沒關係，慢慢來。你對我們公司目前有什麼印象？";
+      if (["behavioral", "role", "resume"].includes(question.category))
         return en ? "No rush. Could you tell me a bit more, for example what you did yourself?" : "沒關係，慢慢來。可以再多說一點嗎？例如當時你自己做了什麼？";
       return null;
     }

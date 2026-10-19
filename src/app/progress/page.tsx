@@ -10,6 +10,9 @@ export default function ProgressPage() {
       <h1 className="text-2xl font-bold sm:text-3xl">
         <T zh="我的進度" en="Your progress" />
       </h1>
+      <p className="mt-2 text-ink-2">
+        <T zh="每次練習的分數都記在這裡，只存在這台裝置的瀏覽器。" en="Scores from every session, saved only in this browser on this device." />
+      </p>
       <ProgressView />
     </div>
   );

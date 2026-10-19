@@ -9,7 +9,7 @@ import { QUESTIONS } from "@/lib/data/questions";
 import { COMPANY_TYPES, FOCUS_TOPICS } from "@/lib/data/options";
 import type { CompanyType, FocusTopic, Question } from "@/lib/types";
 import { getLastConfig, setPendingConfig } from "@/lib/storage";
-import { T, useLang } from "@/lib/i18n";
+import { T, setLang, useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type Kind = "all" | "trap" | "behavioral" | "en" | "group";
@@ -225,17 +225,31 @@ export function QuestionBank() {
       </div>
 
       <p className="mt-4 text-sm text-muted" aria-live="polite">
-        <T zh={`共 ${filtered.length} 題`} en={`${enCount} English questions. Switch to 中文 for all ${filtered.length}, including Taiwan-specific ones.`} />
+        <T
+          zh={`共 ${filtered.length} 題`}
+          en={
+            enCount === 0
+              ? ""
+              : `${enCount} English question${enCount === 1 ? "" : "s"}.${filtered.length > enCount ? ` Switch to 中文 for ${filtered.length - enCount} more, including Taiwan-specific ones.` : ""}`
+          }
+        />
       </p>
 
       {visibleCount === 0 ? (
         <div className="mt-3 rounded-xl bg-white p-8 text-center">
           <p className="font-bold text-ink">
-            <T zh="沒有符合的題目" en="No matching questions" />
+            <T zh="沒有符合的題目" en={filtered.length ? "These questions are in Chinese only" : "No matching questions"} />
           </p>
-          <Button variant="outline" className="mt-4" onClick={reset}>
-            <T zh="清除篩選" en="Clear filters" />
-          </Button>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {lang === "en" && filtered.length > 0 && (
+              <Button onClick={() => setLang("zh")}>
+                Switch to 中文 ({filtered.length})
+              </Button>
+            )}
+            <Button variant="outline" onClick={reset}>
+              <T zh="清除篩選" en="Clear filters" />
+            </Button>
+          </div>
         </div>
       ) : (
         <ul className="mt-3 space-y-2">

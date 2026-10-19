@@ -8,6 +8,31 @@ Every build was reviewed as three personas, plus mobile (375 px), Lighthouse (mo
 
 ---
 
+## v0.8: Final review: fairer scores, honest labels, English research (2026-10-19)
+
+**Found by running every flow in both languages as Personas A, B and C**
+- **Scores were too generous for near-empty answers.** Answering "沒有。" to "Why do you want to join us?" scored 59, and a 3-second self-introduction scored 49. → Very short answers now pull every dimension toward 20. A session of one-line answers now scores about 27–29, instead of 54. Normal-length answers are unchanged.
+- **The warm-up broke its own promise.** The ready screen says "三題常見問題，不追問", but Mir still followed up, sometimes with the same sentence twice and asking "what did you do yourself?" after a motivation question. → The 3-minute warm-up never follows up. In warm-up difficulty, follow-ups now match the question type.
+- **A good closing question was marked "too short".** "想請問前三個月最重要的目標是什麼？" was penalised for length. → Asking one real question now counts as a complete answer.
+- **The most important feedback was buried.** For a 3-second answer, the report talked about STAR before mentioning length. → Length comes first in both "HR 怎麼看" and "怎麼改".
+- **English question bank dead end.** Filtering by a Chinese-only topic showed "0 English questions… for all 1". → It now says the questions are in Chinese only and offers a one-tap "Switch to 中文".
+- Grammar: "1 filler words", "0 seconds" fixed.
+
+**Honesty and accuracy**
+- The home page said "AI 語音模擬面試", but this prototype's feedback is rule-based (see /research, Method). → Now "語音模擬面試 / Voice interview practice".
+- /research: removed a note that referred to "使用者提供的" data, and corrected the brand line, because headings no longer use Roboto Slab.
+
+**English**
+- /research now has a full English version: market data, survey findings, interview styles, the five problems, and method and limits. The citations are shared with the Chinese version.
+
+**Layout**
+- Removed about 150 px of empty space above the footer on phones.
+- Progress page: a one-line intro rendered by the server, so the page shows content before JavaScript loads.
+
+**Checks**: zero Chinese in English mode on every core page; no horizontal scroll at 375 px; language survives a simulated browser-extension hydration error. Lighthouse (mobile): Accessibility 100, Best Practices 100 and SEO 100 on all pages. Performance is 90–97 on most pages and 87–97 on Progress. A side-by-side run of v0.6 on the same machine also varied by about 8 points.
+
+---
+
 ## v0.7: A real English mode, and a less "AI-generated" look (2026-10-19)
 
 **Feedback from the project owner**

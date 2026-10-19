@@ -229,7 +229,7 @@ export function ReportView({ session, previous, idPrefix = "" }: { session: Sess
             )}
             <p className="mt-3 font-display text-lg font-semibold text-ink">{report.headline}</p>
             <p className="mt-1 text-xs text-muted">
-              {tr(`口頭禪 ${report.totalFillers} 次`, `${report.totalFillers} filler words`)}{report.avgPace !== null ? tr(`・平均語速 ${report.avgPace} 字/分`, ` · ${report.avgPace} wpm average`) : ""}
+              {tr(`口頭禪 ${report.totalFillers} 次`, `${report.totalFillers} filler word${report.totalFillers === 1 ? "" : "s"}`)}{report.avgPace !== null ? tr(`・平均語速 ${report.avgPace} 字/分`, ` · ${report.avgPace} wpm average`) : ""}
             </p>
           </div>
           <RadarChart dims={report.dims} previous={previous?.report.dims} size={280} lang={lang} />

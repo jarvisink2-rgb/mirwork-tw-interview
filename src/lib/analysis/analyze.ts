@@ -312,8 +312,10 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
   const [minSec, maxSec] = q.idealSec;
   const charsPerSec = en ? 2.3 : 3.8;
   const effectiveSec = voice && rec.durationSec > 0 ? rec.durationSec : len / charsPerSec;
-  const tooShort = effectiveSec < minSec * 0.5;
-  const short = !tooShort && effectiveSec < minSec;
+  // 反問題：問出一個好問題就夠了，不用湊秒數
+  const closingAsked = q.category === "closing" && ASKED_A_QUESTION.test(text);
+  const tooShort = !closingAsked && effectiveSec < minSec * 0.5;
+  const short = !closingAsked && !tooShort && effectiveSec < minSec;
   const tooLong = effectiveSec > maxSec * 1.5;
   const long = !tooLong && effectiveSec > maxSec;
 
@@ -369,12 +371,17 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
   const whyCompany = ["motivation", "en-why-company", "public-why", "finance-why"].includes(q.id);
   if (whyCompany && !researched) fit -= 6;
 
+  // ── 回答量：只講幾秒鐘，HR 等於沒聽到內容 ──
+  // coverage = 實際長度 ÷ 建議最短長度的一半（上限 1）。不到一半時，分數往 20 收斂：
+  // 內容面（邏輯、專業、契合）全額收斂；表達與自信只收斂一半。
+  const coverage = closingAsked ? 1 : Math.min(1, effectiveSec / (minSec * 0.5));
+  const shrink = (v: number, w: number) => 20 + (v - 20) * (1 - w * (1 - coverage));
   const dims: Record<Dim, number> = {
-    expression: clamp(expression, 25, 98),
-    logic: clamp(logic, 25, 98),
-    expertise: clamp(expertise, 25, 97),
-    confidence: clamp(confidence, 25, 98),
-    fit: clamp(fit, 20, 97),
+    expression: clamp(shrink(clamp(expression, 25, 98), 0.5), 20, 98),
+    logic: clamp(shrink(clamp(logic, 25, 98), 1), 20, 98),
+    expertise: clamp(shrink(clamp(expertise, 25, 97), 1), 20, 97),
+    confidence: clamp(shrink(clamp(confidence, 25, 98), 0.5), 20, 98),
+    fit: clamp(shrink(clamp(fit, 20, 97), 1), 20, 97),
   };
   const score = clamp(DIM_ORDER.reduce((s, d) => s + dims[d], 0) / DIM_ORDER.length);
 
@@ -391,10 +398,11 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
 
   const negatives: string[] = [];
   for (const f of flagHits) negatives.push(L(`${f.def.title}${f.quote ? `（你說：「${f.quote}」）` : ""}。${f.def.why}`, `${f.def.en[0]}${f.quote ? ` (you said: "${f.quote}")` : ""}. ${f.def.en[1]}`));
+  const secs = Math.max(1, Math.round(effectiveSec));
+  if (tooShort) negatives.push(L(`${voice ? `這題只答了 ${secs} 秒` : `這段內容唸出來大約只有 ${secs} 秒`}，資訊不夠，容易被當成沒準備。建議 ${minSec}–${maxSec} 秒。`, `This answer ${voice ? "lasted" : "would take"} about ${secs} second${secs === 1 ? "" : "s"}, which is too little to judge and can sound unprepared. Aim for ${minSec}-${maxSec} seconds.`));
   if (storyQuestion && !star.r) negatives.push(L("我聽完還是不知道最後結果怎麼樣。HR 最想知道你造成了什麼改變。", "I still do not know how it turned out. Interviewers most want to hear what changed because of you."));
   if (storyQuestion && !numbers.length) negatives.push(L("內容大多是形容詞，少了一個能證明的數字（人數、百分比、時間）。", "It is mostly adjectives. Add one number that proves it: people, a percentage or time saved."));
-  if (tooShort) negatives.push(L(`${voice ? `這題只答了 ${Math.round(effectiveSec)} 秒` : `這段內容唸出來大約只有 ${Math.round(effectiveSec)} 秒`}，資訊不夠，容易被當成沒準備。建議 ${minSec}–${maxSec} 秒。`, `This answer ${voice ? "lasted" : "would take"} about ${Math.round(effectiveSec)} seconds, which is too little to judge and can sound unprepared. Aim for ${minSec}-${maxSec} seconds.`));
-  else if (tooLong || long) negatives.push(L(`回答大約 ${Math.round(effectiveSec / 6) / 10} 分鐘，超過建議的 ${Math.round(maxSec / 6) / 10} 分鐘，重點容易被埋掉。先講結論。`, `About ${Math.round(effectiveSec / 6) / 10} minutes, longer than the suggested ${Math.round(maxSec / 6) / 10}. Lead with your point.`));
+  if (!tooShort && (tooLong || long)) negatives.push(L(`回答大約 ${Math.round(effectiveSec / 6) / 10} 分鐘，超過建議的 ${Math.round(maxSec / 6) / 10} 分鐘，重點容易被埋掉。先講結論。`, `About ${Math.round(effectiveSec / 6) / 10} minutes, longer than the suggested ${Math.round(maxSec / 6) / 10}. Lead with your point.`));
   if (fillers.length && fillerRate > 1.2) negatives.push(L(`「${fillers[0].word}」出現 ${fillers[0].count} 次，聽起來像在想下一句要說什麼。`, `"${fillers[0].word}" came up ${fillers[0].count} time${fillers[0].count > 1 ? "s" : ""}. It sounds like you are searching for the next sentence.`));
   if (pace !== null && pace > paceHi) negatives.push(L(`語速大約 ${pace} 字/分，偏快，聽起來會緊張。`, `About ${pace} words per minute is fast and can sound nervous.`));
   if (pace !== null && pace < paceLo - 30) negatives.push(L(`語速大約 ${pace} 字/分，偏慢，停頓多會讓人覺得不確定。`, `About ${pace} words per minute is slow; long pauses sound unsure.`));
@@ -405,6 +413,8 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
 
   // ── 具體改法 ──
   const improve: string[] = [];
+  if (tooShort)
+    improve.push(L(`先把內容講完整：補一個具體例子（你做了什麼、結果如何），長度抓在 ${minSec}–${maxSec} 秒。`, `First, say enough: add one specific example (what you did and what happened), aiming for ${minSec}-${maxSec} seconds.`));
   const firstClause = text.split(/[，。,.!?！？]/)[0]?.slice(0, 18);
   if (storyQuestion && !text.slice(0, 40).match(/(我是|我叫|負責|最|I'm|I am|my name)/i) && firstClause)
     improve.push(L(`開頭「${firstClause}…」先換成一句結論，例如「我最相關的經驗是 ___，成果是 ___」。`, `Replace your opening ("${firstClause}...") with a one-line headline: "My most relevant experience is ___, and the result was ___."`));
@@ -413,7 +423,7 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
   if (fillers.length && fillerTotal >= 3) improve.push(L(`把 ${fillerTotal} 個贅字（${fillers.slice(0, 3).map((f) => `${f.word}×${f.count}`).join("、")}）換成短暫停頓。`, `Replace the ${fillerTotal} filler words (${fillers.slice(0, 3).map((f) => `${f.word}×${f.count}`).join(", ")}) with a short pause.`));
   for (const f of flagHits) improve.push(L(f.def.fix, f.def.en[2]));
   if (hedges >= 2) improve.push(L("把「可能、應該」改成「我會、我做了」。", "Swap \"maybe\" and \"I guess\" for \"I will\" and \"I did\"."));
-  if (tooShort || short)
+  if (short)
     improve.push(L(`內容再多一點：補一個具體例子（你做了什麼、結果如何），長度抓在 ${minSec}–${maxSec} 秒。`, `Say more: add one specific example (what you did and what happened), aiming for ${minSec}-${maxSec} seconds.`));
   if (tooLong || long) improve.push(L(`先講結論、刪掉背景描述，把回答控制在 ${maxSec < 60 ? `${maxSec} 秒` : `${Math.round((maxSec / 60) * 10) / 10} 分鐘`}以內。`, `Lead with the point, cut the background, and keep it under ${maxSec < 60 ? `${maxSec} seconds` : `${Math.round((maxSec / 60) * 10) / 10} minutes`}.`));
   if (whyCompany && !researched) improve.push(L("加一句：「我看到你們最近在做 ___，這跟我做過的 ___ 很像。」", "Add one line: \"I saw that you recently ___, which is close to what I did when ___.\""));

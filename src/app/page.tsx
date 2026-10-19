@@ -19,7 +19,7 @@ export default function HomePage() {
       <section className="mx-auto grid max-w-5xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 md:grid-cols-[1.05fr_1fr] md:pt-24">
         <div>
           <p className="text-sm font-bold text-brand">
-            <T zh="AI 語音模擬面試" en="AI voice interview practice" />
+            <T zh="語音模擬面試" en="Voice interview practice" />
           </p>
           <h1 className="mt-3 text-[36px] leading-[1.15] text-ink sm:text-[52px]">
             <T
