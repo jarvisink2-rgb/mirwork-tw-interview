@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MirWork 模擬面試 · 台灣版原型
 
-## Getting Started
+A voice-first AI mock-interview prototype for Taiwanese university students, new graduates and job seekers (大學生／應屆畢業生／待業者), built on MirWork's brand and product direction.
 
-First, run the development server:
+- **Live research page:** `/research` (all sources cited)
+- **Stack:** Next.js 15 (App Router, static export) · Tailwind CSS v4 · shadcn/ui-style components on Radix · TypeScript
+- **Language:** 繁體中文 (台灣用語) UI, with an English interview mode for 外商
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## What it does
+
+| Page | Route | What's in it |
+|---|---|---|
+| 首頁 | `/` | Value prop for 新鮮人 & 待業者, social proof, one-click 3-minute warm-up |
+| 設定面試 | `/setup` | 狀況, 公司類型 (7), 職缺 (9), 難度, 陷阱題 focus, 中/英, 語音/打字, 題數, résumé/自傳 PDF → tailored questions |
+| 面試室 | `/interview` | Voice-first: AI interviewer avatar, live mic waveform, live transcript (Web Speech API, zh-TW), timer, 追問 follow-ups, hints, optional webcam self-view, text fallback |
+| 回饋報告 | `/report?id=…`, `/report/demo` | Total score + radar (表達・邏輯 STAR・專業度・自信・企業文化契合), per-answer transcript with filler highlighting, pace, STAR check, "HR 內心 OS", concrete fixes, model answer, 台灣 HR 紅旗, practice plan |
+| 題庫 | `/questions` | 52 questions by company type, trap questions, STAR, English, 群面, with HR intent / red flags / model answers / follow-ups / sources |
+| 進度追蹤 | `/progress` | Score trend, per-dimension average, weakest area, session history |
+| 資源 | `/resources` | 自傳健檢 (8 checks based on employer complaints, incl. simplified-character detection), interview-day checklist, salary benchmarks, 5 youth employment subsidies, career exploration tools |
+| 研究 | `/research` | Market data, pain points, interview styles, top-5 problems → feature mapping, method & limits, 24 cited sources |
+
+## Architecture
+
+```
+src/
+  app/                 # routes (all statically exported)
+  components/          # UI (shadcn-style primitives in components/ui)
+  lib/
+    ai/provider.ts     # ← the single seam between UI and "the AI"
+    ai/mock-provider.ts# question planning, follow-ups, evaluation (in-browser)
+    analysis/          # deterministic analyser: fillers, pace, STAR, numbers, red flags, scoring
+    data/              # question bank, options, demo session
+    speech.ts          # Web Speech API: TTS (zh-TW voice) + recognition hook
+    storage.ts         # localStorage sessions (never throws)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+All AI behaviour goes through the `InterviewAI` interface in `src/lib/ai/provider.ts`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```ts
+planQuestions(config) → PlannedQuestion[]
+greeting(config, n) / acknowledge(config, i) → string
+followUp({ config, question, answer, … }) → string | null   // 追問
+evaluate(config, answers) → Report                           // the feedback report
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Plugging in a real LLM / voice API later
 
-## Learn More
+1. Switch `next.config.ts` from `output: "export"` to a normal build.
+2. Add route handlers, e.g. `src/app/api/interview/follow-up/route.ts` and `…/evaluate/route.ts`, that call your LLM with the question-bank metadata (`intent`, `goodSignals`, `redFlags`) as rubric.
+3. Implement an `httpProvider` that satisfies `InterviewAI` by calling those routes, and return it from `getProvider()`.
+4. For voice, replace `useSpeechRecognition` / `speak` in `src/lib/speech.ts` with a streaming STT/TTS service. The `Report` and `AnswerRecord` types stay the same, so the report UI needs no changes.
 
-To learn more about Next.js, take a look at the following resources:
+## Run locally
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # static site in ./out
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy to Vercel
 
-## Deploy on Vercel
+Import the repo in Vercel (framework preset: Next.js). No environment variables needed.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Honest limits of this prototype
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Scoring is rule-based (pace, fillers, STAR keywords, numbers, red-flag phrases), not an LLM, and is not yet calibrated against real HR ratings.
+- Speech recognition uses the browser's built-in service (Chrome sends audio to Google's speech service). In-app browsers (LINE, IG, FB) usually don't support it, so the app falls back to typing.
+- Practice history lives only in the browser's localStorage.
+
+See `CHANGELOG.md` for every design iteration and what each persona review changed.
