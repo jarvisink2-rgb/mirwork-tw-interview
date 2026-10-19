@@ -79,10 +79,15 @@ function planEn(config: InterviewConfig): PlannedQuestion[] {
   const en = QUESTIONS.filter((q) => q.lang === "en");
   const byId = (id: string) => en.find((q) => q.id === id)!;
   const middle: Question[] = [byId("en-why-company")];
-  if (config.situation === "career-change" || config.situation === "unemployed" || config.focus.includes("leaving")) middle.push(byId("en-leaving"));
-  if (config.focus.includes("weakness")) middle.push(byId("en-strength-weakness"));
+  if (!config.quick) {
+    if (config.situation === "career-change" || config.situation === "unemployed" || config.focus.includes("leaving")) middle.push(byId("en-leaving"));
+    if (config.focus.includes("weakness")) middle.push(byId("en-strength-weakness"));
+  }
   for (const id of shuffle(["en-mistake", "en-diversity", "en-why-hire", "en-strength-weakness"])) if (!middle.some((q) => q.id === id)) middle.push(byId(id));
-  return [toPlanned(byId("en-intro")), ...middle.slice(0, config.length - 2).map(toPlanned), toPlanned(byId("en-questions"))];
+  const resume = config.quick ? [] : resumeQuestions(config.resumeKeywords, "en").slice(0, config.length >= 7 ? 2 : 1);
+  const middleCount = Math.max(0, config.length - 2 - resume.length);
+  const [first, ...rest] = middle.slice(0, middleCount).map(toPlanned);
+  return [toPlanned(byId("en-intro")), ...(first ? [first] : []), ...resume, ...rest, toPlanned(byId("en-questions"))];
 }
 
 const ACK_ZH = ["好，謝謝你的分享。", "了解。", "嗯，我明白了。", "好的，我記下來了。", "謝謝，我們繼續。"];
@@ -110,7 +115,7 @@ export const mockProvider: InterviewAI = {
         : "你好，我是 Mir。這是 3 分鐘暖身，只有三題最常見的問題，答不好也完全沒關係，把我當成一個普通人聊天就好。";
     }
     if (config.lang === "en") {
-      return `Hi, I'm Mir, and I'll be your interviewer today for the ${roleLabel(config.role)} role${config.companyName ? ` at ${config.companyName}` : ""}. We'll go through ${n} questions, about ${minutes} minutes. ${config.difficulty === "warmup" ? "This is a warm-up, so there's no pressure. " : ""}Whenever you're ready, let's begin.`;
+      return `Hi, I'm Mir, and I'll be your interviewer today for the ${roleLabel(config.role, "en")} role${config.companyName ? ` at ${config.companyName}` : ""}. We'll go through ${n} questions, about ${minutes} minutes. ${config.difficulty === "warmup" ? "This is a warm-up, so there's no pressure. " : ""}Whenever you're ready, let's begin.`;
     }
     const company = config.companyName ? `「${config.companyName}」` : `一間${companyLabel(config.companyType)}公司`;
     const round = config.difficulty === "pressure" ? "主管面試" : "第一輪面試";

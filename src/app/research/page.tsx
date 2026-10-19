@@ -106,6 +106,7 @@ const STYLES = [
 export default function ResearchPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      <p className="i18n-en mb-5 rounded-lg border border-line-soft bg-white px-4 py-3 text-sm text-ink-2">This research summary on Taiwan&apos;s youth job market is written in Traditional Chinese. All sources are linked at the bottom.</p>
       <Badge>研究摘要・2026 年 10 月</Badge>
       <h1 className="mt-3 text-2xl font-bold sm:text-3xl">台灣年輕人不是沒有能力，是沒有機會把自己「說出來」</h1>
       <p className="mt-3 text-lg text-ink-2">

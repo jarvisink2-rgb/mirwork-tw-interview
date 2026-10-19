@@ -4,18 +4,17 @@ import { useRouter } from "next/navigation";
 import { Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_CONFIG, getLastConfig, setPendingConfig } from "@/lib/storage";
-import { safeStorage } from "@/lib/utils";
-import { PREF_LANG_KEY } from "./lang-toggle";
+import { T, getLang } from "@/lib/i18n";
 
-/** 一鍵開始：3 題通用暖身，不用填任何設定。 */
-export function QuickStartButton({ label = "立即開始 3 分鐘暖身" }: { label?: string }) {
+/** 一鍵開始：3 題通用暖身，不用填任何設定。語言跟著目前的介面語言。 */
+export function QuickStartButton() {
   const router = useRouter();
   const start = () => {
     const last = getLastConfig();
-    const lang = safeStorage.get<"zh" | "en">(PREF_LANG_KEY, "zh");
+    const lang = getLang();
     setPendingConfig({
       ...DEFAULT_CONFIG,
-      companyType: lang === "en" ? "foreign" : last.companyType,
+      companyType: last.companyType,
       role: last.role,
       situation: last.situation,
       lang,
@@ -29,7 +28,7 @@ export function QuickStartButton({ label = "立即開始 3 分鐘暖身" }: { la
   return (
     <Button size="lg" onClick={start}>
       <Mic aria-hidden />
-      {label}
+      <T zh="開始 3 分鐘暖身" en="Start a 3-minute warm-up" />
     </Button>
   );
 }

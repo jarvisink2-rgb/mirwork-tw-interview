@@ -39,9 +39,9 @@ export function formatClock(totalSeconds: number) {
   return `${String(m).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
-export function formatDate(iso: string) {
+export function formatDate(iso: string, lang: "zh" | "en" = "zh") {
   try {
-    return new Intl.DateTimeFormat("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+    return new Intl.DateTimeFormat(lang === "en" ? "en-GB" : "zh-TW", { month: lang === "en" ? "short" : "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
   } catch {
     return iso.slice(0, 10);
   }

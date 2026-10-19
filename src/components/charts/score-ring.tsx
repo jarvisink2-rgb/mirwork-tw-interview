@@ -10,7 +10,7 @@ export function ScoreRing({ value, size = 132, label = "總分" }: { value: numb
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#0A6FD6" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} />
       </svg>
       <div className="absolute text-center">
-        <div className="font-display text-4xl font-bold leading-none text-ink">{value}</div>
+        <div className="font-brand text-4xl font-bold leading-none text-ink">{value}</div>
         <div className="mt-1 text-xs font-bold text-muted">{label} / 100</div>
       </div>
     </div>

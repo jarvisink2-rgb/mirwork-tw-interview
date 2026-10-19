@@ -8,6 +8,30 @@ Every build was reviewed as three personas, plus mobile (375 px), Lighthouse (mo
 
 ---
 
+## v0.7: A real English mode, and a less "AI-generated" look (2026-10-19)
+
+**Feedback from the project owner**
+- "English mode doesn't work." Clicking EN only changed the interview language; every page, button and the whole report stayed in Chinese.
+- "It doesn't look professional, it looks AI-made." Cartoon avatar, emoji everywhere, serif headings, badges and decorative copy.
+
+**Reviewed as a user who only reads English (Persona C applying to a 外商)**
+- Clicked EN on the home page: nothing visible changed. → The toggle now switches the whole site instantly, is remembered, and applies before first paint (no Chinese flash).
+- Started a warm-up in English: questions were English but buttons, hints, timer labels and errors were Chinese. → Every interview string is translated.
+- Report: feedback, red flags, fixes, model answers, STAR labels, next steps and dates were Chinese. → The analyser now writes its feedback in the session's language; the report, radar and score ring follow it.
+- Question bank showed 44 Chinese questions. → In English it shows the 8 English questions, with a note that 中文 has all 52.
+- Resources was Chinese-only. → Checklist, salaries, subsidies (with the official Chinese names kept for searching) and links are translated. The 自傳 checker stays Chinese-only because 自傳 are written in Chinese.
+- The same question appeared twice in the interview (Mir's bubble and the question card). → The bubble now only shows Mir's lead-in.
+
+**Visual polish**
+- Cartoon avatar → a simple voice orb that pulses while Mir speaks and while you record.
+- All emoji removed. Headings use the same sans-serif as the body.
+- Home hero now shows what the product actually looks like (question, waveform, live transcript) instead of marketing copy.
+- Fixed an 8 px horizontal scroll on the home page at 375 px.
+
+**Checks**: an automated test switches to EN and finds zero Chinese text on Home, Setup, Interview, Report (own and example), Progress and 404. Lighthouse (mobile): Performance 92–95, Accessibility 100, Best Practices 100.
+
+---
+
 ## v0.6: Owner feedback — no unverifiable claims, much less text (2026-10-19)
 
 **Feedback from the project owner**

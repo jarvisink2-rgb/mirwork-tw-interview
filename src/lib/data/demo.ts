@@ -67,7 +67,57 @@ const DEMO_ANSWERS: AnswerRecord[] = [
   },
 ];
 
-export function buildDemoSession(): Session {
+const DEMO_EN_CONFIG: InterviewConfig = { ...DEMO_CONFIG, lang: "en", companyType: "foreign", companyName: "Example Co.", focus: [] };
+
+const DEMO_EN_ANSWERS: AnswerRecord[] = [
+  {
+    questionId: "en-intro",
+    baseId: "en-intro",
+    questionText: "Tell me about yourself.",
+    isFollowUp: false,
+    transcript:
+      "Hi, um, I'm Kevin and I just graduated in computer science. So, like, in my capstone project I built a second-hand book platform with three classmates and I did the backend, and, um, about three hundred students signed up. I really like coding and I want to learn a lot at your company.",
+    durationSec: 30,
+  },
+  {
+    questionId: "en-why-company",
+    baseId: "en-why-company",
+    questionText: "Why do you want to join our company?",
+    isFollowUp: false,
+    transcript: "Because it's a big international company with good benefits, and the office is close to my home.",
+    durationSec: 9,
+  },
+  {
+    questionId: "en-mistake",
+    baseId: "en-mistake",
+    questionText: "Describe a mistake you made and how you overcame it.",
+    isFollowUp: false,
+    transcript:
+      "When I built the book platform, the same book sometimes appeared twice. I was responsible for the backend and had to fix it within a week. I added logging and found that users on slow phones tapped the button twice, so I locked the button after one tap and added a unique index in the database. As a result, duplicates dropped from about 20 a week to 0, and I learned to think about how real users behave.",
+    durationSec: 38,
+  },
+  {
+    questionId: "en-questions",
+    baseId: "en-questions",
+    questionText: "Do you have any questions for us?",
+    isFollowUp: false,
+    transcript: "No, thank you.",
+    durationSec: 2,
+  },
+];
+
+export function buildDemoSession(lang: "zh" | "en" = "zh"): Session {
+  if (lang === "en") {
+    return {
+      id: "demo",
+      createdAt: "2026-10-18T14:30:00+08:00",
+      config: DEMO_EN_CONFIG,
+      answers: DEMO_EN_ANSWERS,
+      report: buildReport(DEMO_EN_ANSWERS, DEMO_EN_CONFIG),
+      demo: true,
+    };
+  }
+
   return {
     id: "demo",
     createdAt: "2026-10-18T14:30:00+08:00",

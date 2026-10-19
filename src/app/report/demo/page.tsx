@@ -2,9 +2,18 @@ import type { Metadata } from "next";
 import { ReportView } from "@/components/report/report-view";
 import { buildDemoSession } from "@/lib/data/demo";
 
-export const metadata: Metadata = { title: "示範回饋報告", description: "一位資工應屆生的模擬面試回饋報告範例：總分、雷達圖、台灣 HR 紅旗、逐題 HR 內心 OS 與改寫範例。" };
+export const metadata: Metadata = { title: "示範回饋報告 Example report", description: "模擬面試回饋報告範例 / An example mock-interview feedback report." };
 
-// 示範報告在建置時就由分析器產生，直接輸出成靜態 HTML
+// 兩種語言的示範報告都在建置時產生，CSS 依介面語言顯示其中一份
 export default function DemoReportPage() {
-  return <ReportView session={buildDemoSession()} previous={null} />;
+  return (
+    <>
+      <div className="i18n-zh">
+        <ReportView session={buildDemoSession("zh")} previous={null} idPrefix="zh-" />
+      </div>
+      <div className="i18n-en">
+        <ReportView session={buildDemoSession("en")} previous={null} idPrefix="en-" />
+      </div>
+    </>
+  );
 }

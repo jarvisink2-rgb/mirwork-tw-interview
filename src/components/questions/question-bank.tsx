@@ -2,39 +2,47 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ExternalLink, Mic, Search, Users } from "lucide-react";
+import { ChevronDown, ExternalLink, Lightbulb, Mic, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QUESTIONS } from "@/lib/data/questions";
 import { COMPANY_TYPES, FOCUS_TOPICS } from "@/lib/data/options";
 import type { CompanyType, FocusTopic, Question } from "@/lib/types";
 import { getLastConfig, setPendingConfig } from "@/lib/storage";
+import { T, useLang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type Kind = "all" | "trap" | "behavioral" | "en" | "group";
 
-const KINDS: { id: Kind; label: string }[] = [
-  { id: "all", label: "全部" },
-  { id: "trap", label: "陷阱題" },
-  { id: "behavioral", label: "行為題（STAR）" },
-  { id: "en", label: "英文面試" },
-  { id: "group", label: "群面" },
+const KINDS: { id: Kind; zh: string; en: string; zhOnly?: boolean }[] = [
+  { id: "all", zh: "全部", en: "All" },
+  { id: "trap", zh: "陷阱題", en: "Trap questions" },
+  { id: "behavioral", zh: "行為題（STAR）", en: "Behavioral (STAR)" },
+  { id: "en", zh: "英文面試", en: "English", zhOnly: true },
+  { id: "group", zh: "群面", en: "Group", zhOnly: true },
 ];
 
-function QuestionCard({ q, open, onToggle, onPractice }: { q: Question; open: boolean; onToggle: () => void; onPractice: () => void }) {
-  const companies = q.companyTypes === "all" ? "所有公司" : q.companyTypes.map((c) => COMPANY_TYPES.find((x) => x.id === c)?.short).join("、");
+const PAGE = 12;
+
+function QuestionCard({ q, open, onToggle, onPractice, className }: { q: Question; open: boolean; onToggle: () => void; onPractice: () => void; className?: string }) {
+  const en = q.lang === "en";
+  const tr = (zh: string, enText: string) => (en ? enText : zh);
+  const companies =
+    q.companyTypes === "all"
+      ? tr("所有公司", "All companies")
+      : q.companyTypes.map((c) => COMPANY_TYPES.find((x) => x.id === c)?.[en ? "en" : "short"]).join(en ? ", " : "、");
   return (
-    <li className="rounded-2xl border border-line-soft bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]" id={`q-${q.id}`}>
+    <li className={cn("rounded-xl border border-line-soft bg-white", className)} id={`q-${q.id}`}>
       <h2 className="m-0 text-base">
-        <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full cursor-pointer items-start gap-3 rounded-2xl p-4 text-left sm:p-5">
+        <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full cursor-pointer items-start gap-3 rounded-xl p-4 text-left sm:px-5">
           <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap gap-1.5">
-              {q.trap && <Badge variant="bad">陷阱題</Badge>}
+            <span className="block font-sans text-base font-bold leading-snug text-ink [text-wrap:pretty]">{q.text}</span>
+            <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+              {q.trap && <Badge variant="bad">{tr("陷阱題", "Trap")}</Badge>}
               {q.category === "group" && <Badge variant="ink">群面</Badge>}
-              {q.lang === "en" && <Badge>English</Badge>}
-              <Badge variant="outline">{companies}</Badge>
+              {en && <Badge className="i18n-zh">English</Badge>}
+              <span>{companies}</span>
             </span>
-            <span className="mt-1.5 block font-sans text-base font-bold leading-snug text-ink [text-wrap:pretty]">{q.text}</span>
           </span>
           <ChevronDown className={cn("mt-1 size-5 shrink-0 text-muted transition-transform", open && "rotate-180")} aria-hidden />
         </button>
@@ -42,34 +50,45 @@ function QuestionCard({ q, open, onToggle, onPractice }: { q: Question; open: bo
       {open && (
         <div className="space-y-4 border-t border-line-soft px-4 pb-5 pt-4 sm:px-5">
           <div>
-            <h3 className="text-sm font-bold text-muted">HR 真正想知道</h3>
+            <h3 className="text-sm font-bold text-muted">{tr("HR 真正想知道", "What the interviewer wants to know")}</h3>
             <p className="mt-1 text-ink-2">{q.intent}</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-good-tint px-4 py-3">
-              <h3 className="text-sm font-bold text-good">加分</h3>
+            <div className="rounded-lg bg-good-tint px-4 py-3">
+              <h3 className="text-sm font-bold text-good">{tr("加分", "Strong answers")}</h3>
               <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
-                {q.goodSignals.map((g) => <li key={g}>{g}</li>)}
+                {q.goodSignals.map((g) => (
+                  <li key={g}>{g}</li>
+                ))}
               </ul>
             </div>
-            <div className="rounded-xl bg-bad-tint px-4 py-3">
-              <h3 className="text-sm font-bold text-bad">扣分／紅旗</h3>
+            <div className="rounded-lg bg-bad-tint px-4 py-3">
+              <h3 className="text-sm font-bold text-bad">{tr("扣分", "Red flags")}</h3>
               <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
-                {q.redFlags.map((g) => <li key={g}>{g}</li>)}
+                {q.redFlags.map((g) => (
+                  <li key={g}>{g}</li>
+                ))}
               </ul>
             </div>
           </div>
-          {q.tip && <p className="rounded-xl bg-brand-tint px-4 py-3 text-sm font-bold text-brand-strong">💡 {q.tip}</p>}
-          <details className="group rounded-xl border border-line-soft px-4 py-3">
-            <summary className="cursor-pointer text-sm font-bold text-ink">看範例回答</summary>
+          {q.tip && (
+            <p className="flex gap-2 rounded-lg bg-brand-tint px-4 py-3 text-sm font-bold text-brand-strong">
+              <Lightbulb className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {q.tip}
+            </p>
+          )}
+          <details className="rounded-lg border border-line-soft px-4 py-3">
+            <summary className="cursor-pointer text-sm font-bold text-ink">{tr("看範例回答", "Example answer")}</summary>
             <p className="mt-2 leading-relaxed text-ink-2">{q.modelAnswer}</p>
-            <p className="mt-1 text-xs text-muted">請參考結構，換成你自己的經驗和數字。</p>
+            <p className="mt-1 text-xs text-muted">{tr("參考結構就好，換成你自己的經驗。", "Use the structure, not the words.")}</p>
           </details>
           {q.followUps.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold text-muted">面試官可能的追問</h3>
+              <h3 className="text-sm font-bold text-muted">{tr("可能的追問", "Likely follow-ups")}</h3>
               <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
-                {q.followUps.map((f) => <li key={f}>{f}</li>)}
+                {q.followUps.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
               </ul>
             </div>
           )}
@@ -77,17 +96,18 @@ function QuestionCard({ q, open, onToggle, onPractice }: { q: Question; open: bo
             {q.category !== "group" ? (
               <Button variant="soft" onClick={onPractice}>
                 <Mic aria-hidden />
-                用這題練習
+                {tr("用這題練習", "Practise this question")}
               </Button>
             ) : (
               <p className="flex items-center gap-1.5 text-sm text-muted">
                 <Users className="size-4" aria-hidden />
-                群面需要多人，建議找 3–5 位同學一起，用計時器照五個步驟練。
+                群面需要多人，建議找 3–5 位同學一起練。
               </p>
             )}
             {q.source && (
-              <a href={q.source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted underline-offset-2 hover:text-ink hover:underline">
-                參考：{q.source.label}
+              <a href={q.source.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted hover:text-ink hover:underline">
+                {tr("參考：", "Source: ")}
+                {q.source.label}
                 <ExternalLink className="size-3" aria-hidden />
               </a>
             )}
@@ -100,12 +120,12 @@ function QuestionCard({ q, open, onToggle, onPractice }: { q: Question; open: bo
 
 export function QuestionBank() {
   const router = useRouter();
+  const lang = useLang();
   const [company, setCompany] = useState<CompanyType | "all">("all");
   const [kind, setKind] = useState<Kind>("all");
   const [focus, setFocus] = useState<FocusTopic | null>(null);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
@@ -138,6 +158,9 @@ export function QuestionBank() {
     });
   }, [company, kind, focus, query]);
 
+  const enCount = filtered.filter((q) => q.lang === "en").length;
+  const visibleCount = lang === "en" ? enCount : filtered.length;
+
   const practice = (q: Question) => {
     const last = getLastConfig();
     setPendingConfig({ ...last, lang: q.lang, singleQuestionId: q.id, quick: false, difficulty: last.difficulty === "warmup" ? "standard" : last.difficulty });
@@ -151,75 +174,81 @@ export function QuestionBank() {
     setQuery("");
   };
 
+  const chip = (active: boolean) =>
+    cn(
+      "h-9 shrink-0 cursor-pointer rounded-full border px-4 text-sm font-bold transition-colors",
+      active ? "border-ink bg-ink text-white" : "border-line bg-white text-ink-2 hover:border-ink-2",
+    );
+
   return (
     <div className="mt-6">
       <div className="space-y-3">
         <label className="relative block">
-          <span className="sr-only">搜尋題目</span>
+          <span className="sr-only">{lang === "en" ? "Search questions" : "搜尋題目"}</span>
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="搜尋：薪資、空窗期、加班、台積電…"
-            className="h-12 w-full rounded-full border border-line bg-white pl-11 pr-4 text-[16px] outline-none focus:border-brand"
+            placeholder={lang === "en" ? "Search questions" : "搜尋：薪資、空窗期、加班…"}
+            className="h-11 w-full rounded-xl border border-line bg-white pl-11 pr-4 text-[16px] outline-none focus:border-brand"
           />
         </label>
-        <div role="group" aria-label="題型" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <div role="group" aria-label={lang === "en" ? "Question type" : "題型"} className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
           {KINDS.map((k) => (
-            <button
-              key={k.id}
-              type="button"
-              aria-pressed={kind === k.id}
-              onClick={() => setKind(k.id)}
-              className={cn("h-10 shrink-0 cursor-pointer rounded-full border px-4 text-sm font-bold", kind === k.id ? "border-ink bg-ink text-white" : "border-line bg-white text-ink-2")}
-            >
-              {k.label}
+            <button key={k.id} type="button" aria-pressed={kind === k.id} onClick={() => setKind(k.id)} className={cn(chip(kind === k.id), k.zhOnly && "i18n-zh")}>
+              <T zh={k.zh} en={k.en} />
             </button>
           ))}
         </div>
-        <div role="group" aria-label="公司類型" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-          <button type="button" aria-pressed={company === "all"} onClick={() => setCompany("all")} className={cn("h-10 shrink-0 cursor-pointer rounded-full border px-4 text-sm font-bold", company === "all" ? "border-brand bg-brand-tint text-brand-strong" : "border-line bg-white text-ink-2")}>
+        <div role="group" aria-label="公司類型" className="i18n-zh flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <button type="button" aria-pressed={company === "all"} onClick={() => setCompany("all")} className={chip(company === "all")}>
             所有公司
           </button>
           {COMPANY_TYPES.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              aria-pressed={company === c.id}
-              onClick={() => setCompany(c.id)}
-              className={cn("h-10 shrink-0 cursor-pointer rounded-full border px-4 text-sm font-bold", company === c.id ? "border-brand bg-brand-tint text-brand-strong" : "border-line bg-white text-ink-2")}
-            >
+            <button key={c.id} type="button" aria-pressed={company === c.id} onClick={() => setCompany(c.id)} className={chip(company === c.id)}>
               {c.short}
             </button>
           ))}
         </div>
         {focus && (
           <p className="flex items-center gap-2 text-sm text-ink-2">
-            只顯示：<Badge variant="bad">{FOCUS_TOPICS.find((f) => f.id === focus)?.label}</Badge>
+            <T zh="只顯示：" en="Showing: " />
+            <Badge variant="bad">
+              <T zh={FOCUS_TOPICS.find((f) => f.id === focus)?.label} en={FOCUS_TOPICS.find((f) => f.id === focus)?.en} />
+            </Badge>
             <button type="button" className="cursor-pointer font-bold text-brand underline" onClick={() => setFocus(null)}>
-              顯示全部
+              <T zh="顯示全部" en="Show all" />
             </button>
           </p>
         )}
       </div>
 
-      <p className="mt-4 text-sm text-muted" aria-live="polite">共 {filtered.length} 題</p>
-      {filtered.length === 0 ? (
-        <div className="mt-3 rounded-2xl bg-white p-8 text-center">
-          <p className="font-bold text-ink">沒有符合的題目</p>
-          <p className="mt-1 text-sm text-ink-2">換個關鍵字，或清除篩選條件看看。</p>
-          <Button variant="outline" className="mt-4" onClick={reset}>清除篩選</Button>
+      <p className="mt-4 text-sm text-muted" aria-live="polite">
+        <T zh={`共 ${filtered.length} 題`} en={`${enCount} English questions. Switch to 中文 for all ${filtered.length}, including Taiwan-specific ones.`} />
+      </p>
+
+      {visibleCount === 0 ? (
+        <div className="mt-3 rounded-xl bg-white p-8 text-center">
+          <p className="font-bold text-ink">
+            <T zh="沒有符合的題目" en="No matching questions" />
+          </p>
+          <Button variant="outline" className="mt-4" onClick={reset}>
+            <T zh="清除篩選" en="Clear filters" />
+          </Button>
         </div>
       ) : (
-        <ul className="mt-3 space-y-3">
-          {(showAll ? filtered : filtered.slice(0, 12)).map((q) => (
-            <QuestionCard key={q.id} q={q} open={openId === q.id} onToggle={() => setOpenId(openId === q.id ? null : q.id)} onPractice={() => practice(q)} />
-          ))}
+        <ul className="mt-3 space-y-2">
+          {filtered.map((q, i) => {
+            const beyond = !showAll && i >= PAGE;
+            // zh UI: first 12 (any language). en UI: English questions only.
+            const cls = q.lang === "zh" ? cn("i18n-zh", beyond && "hidden") : beyond ? "i18n-en" : undefined;
+            return <QuestionCard key={q.id} className={cls} q={q} open={openId === q.id} onToggle={() => setOpenId(openId === q.id ? null : q.id)} onPractice={() => practice(q)} />;
+          })}
         </ul>
       )}
-      {!showAll && filtered.length > 12 && (
-        <div className="mt-4 text-center">
+      {!showAll && filtered.length > PAGE && (
+        <div className="i18n-zh mt-4 text-center">
           <Button variant="outline" onClick={() => setShowAll(true)}>
             顯示全部 {filtered.length} 題
           </Button>

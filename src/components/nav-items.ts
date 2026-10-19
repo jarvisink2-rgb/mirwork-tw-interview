@@ -1,11 +1,11 @@
 import { BookOpen, ChartLine, Home, LifeBuoy, Mic } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { href: "/", label: "首頁", icon: Home },
-  { href: "/setup/", label: "模擬面試", icon: Mic },
-  { href: "/questions/", label: "題庫", icon: BookOpen },
-  { href: "/progress/", label: "進度", icon: ChartLine },
-  { href: "/resources/", label: "資源", icon: LifeBuoy },
+  { href: "/", zh: "首頁", en: "Home", icon: Home },
+  { href: "/setup/", zh: "模擬面試", en: "Practice", icon: Mic },
+  { href: "/questions/", zh: "題庫", en: "Questions", icon: BookOpen },
+  { href: "/progress/", zh: "進度", en: "Progress", icon: ChartLine },
+  { href: "/resources/", zh: "資源", en: "Resources", icon: LifeBuoy },
 ] as const;
 
 export function isActive(pathname: string, href: string) {

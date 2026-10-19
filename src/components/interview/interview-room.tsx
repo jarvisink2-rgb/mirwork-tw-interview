@@ -19,6 +19,7 @@ import { questionMeta } from "@/lib/analysis/analyze";
 import { companyLabel, difficultyLabel, roleLabel } from "@/lib/data/options";
 import { inAppBrowser, speak, srSupported, stopSpeaking, ttsSupported, useSpeechRecognition } from "@/lib/speech";
 import { cn, formatClock, uid } from "@/lib/utils";
+import { T, getLang } from "@/lib/i18n";
 
 type Phase = "loading" | "ready" | "asking" | "answering" | "thinking" | "finishing" | "error";
 type AnswerSub = "idle" | "recording" | "review";
@@ -79,13 +80,14 @@ export function InterviewRoom() {
   const typedRef = useRef<HTMLTextAreaElement>(null);
 
   const lang = config?.lang ?? "zh";
+  const tr = (zh: string, en: string) => (lang === "en" ? en : zh);
   const sr = useSpeechRecognition(lang);
 
   /* ── 載入設定與題目 ── */
   const load = useCallback(async () => {
     setPhase("loading");
     try {
-      const c = takePendingConfig() ?? getLastConfig();
+      const c = takePendingConfig() ?? { ...getLastConfig(), lang: getLang() };
       setConfig(c);
       setMode(c.mode);
       const ai = await getProvider();
@@ -126,16 +128,17 @@ export function InterviewRoom() {
     if (!sr.error) return;
     const msg =
       sr.error === "denied"
-        ? "沒有取得麥克風權限，已切換成打字模式。想用語音的話，請在瀏覽器網址列旁允許麥克風後重新整理。"
+        ? tr("沒有取得麥克風權限，已切換成打字模式。想用語音，請允許麥克風後重新整理。", "Microphone access was blocked, so we switched to typing. To use voice, allow the microphone and reload.")
         : sr.error === "no-mic"
-          ? "找不到麥克風，已切換成打字模式。"
+          ? tr("找不到麥克風，已切換成打字模式。", "No microphone found, so we switched to typing.")
           : sr.error === "network"
-            ? "語音辨識連線不穩，已切換成打字模式。你剛剛說的內容還在，可以直接修改後送出。"
-            : "這個瀏覽器不支援語音辨識，已切換成打字模式。";
+            ? tr("語音辨識連線不穩，已切換成打字模式。你剛剛說的內容還在。", "Speech recognition lost connection, so we switched to typing. What you said is kept.")
+            : tr("這個瀏覽器不支援語音辨識，已切換成打字模式。", "This browser doesn't support speech recognition, so we switched to typing.");
     setNotice(msg);
     setMode("text");
     setTyped((t) => t || sr.text);
     setSub("idle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tr only depends on the session language, fixed for the session
   }, [sr.error, sr.text]);
 
   /* ── 鏡頭（只在本機顯示） ── */
@@ -259,8 +262,8 @@ export function InterviewRoom() {
       const app = inAppBrowser();
       setNotice(
         app
-          ? `${app} 內建瀏覽器不支援語音辨識，已切換成打字模式。想用語音請點右上角「⋯」用 Chrome 或 Safari 開啟。`
-          : "這個瀏覽器不支援語音辨識，已切換成打字模式。建議使用 Chrome 或 Safari。",
+          ? tr(`${app} 內建瀏覽器不支援語音辨識，已切換成打字模式。想用語音請用 Chrome 或 Safari 開啟。`, `${app}'s in-app browser doesn't support speech recognition, so we switched to typing. Open this page in Chrome or Safari to use voice.`)
+          : tr("這個瀏覽器不支援語音辨識，已切換成打字模式。建議使用 Chrome 或 Safari。", "This browser doesn't support speech recognition, so we switched to typing. Chrome or Safari work best."),
       );
       m = "text";
       setMode("text");
@@ -270,7 +273,7 @@ export function InterviewRoom() {
         const s = await navigator.mediaDevices.getUserMedia({ audio: true });
         setMicStream(s);
       } catch {
-        setNotice("沒有取得麥克風權限，已切換成打字模式。想用語音的話，請允許麥克風後重新整理。");
+        setNotice(tr("沒有取得麥克風權限，已切換成打字模式。想用語音，請允許麥克風後重新整理。", "Microphone access was blocked, so we switched to typing. To use voice, allow the microphone and reload."));
         m = "text";
         setMode("text");
       }
@@ -390,8 +393,12 @@ export function InterviewRoom() {
         <Card>
           <CardContent className="flex flex-col items-center text-center">
             <MirAvatar state="thinking" size={104} />
-            <h1 className="mt-4 text-2xl font-bold">準備好了嗎？</h1>
-            <p className="mt-2 text-ink-2">Mir 正在準備題目…</p>
+            <h1 className="mt-4 text-2xl font-bold">
+              <T zh="準備好了嗎？" en="Ready?" />
+            </h1>
+            <p className="mt-2 text-ink-2">
+              <T zh="Mir 正在準備題目…" en="Mir is preparing your questions…" />
+            </p>
             <div className="mt-5 w-full space-y-3">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="h-12 animate-pulse rounded-xl bg-canvas" />
@@ -399,7 +406,7 @@ export function InterviewRoom() {
             </div>
             <Button size="xl" className="mt-6 w-full" disabled>
               <Loader2 className="animate-spin" aria-hidden />
-              準備中
+              <T zh="準備中" en="Preparing" />
             </Button>
           </CardContent>
         </Card>
@@ -411,15 +418,15 @@ export function InterviewRoom() {
     return (
       <div className="mx-auto flex min-h-[70dvh] max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
         <MirAvatar size={96} />
-        <h1 className="text-xl font-bold">題目沒有載入成功</h1>
-        <p className="text-ink-2">可能是網路不穩。你的設定還在，再試一次就好。</p>
+        <h1 className="text-xl font-bold">{tr("題目沒有載入成功", "Couldn't load the questions")}</h1>
+        <p className="text-ink-2">{tr("可能是網路不穩。你的設定還在，再試一次就好。", "Your connection may have dropped. Your settings are saved, so just try again.")}</p>
         <div className="flex gap-2">
           <Button onClick={load}>
             <RotateCcw aria-hidden />
-            再試一次
+            {tr("再試一次", "Try again")}
           </Button>
           <Button asChild variant="outline">
-            <Link href="/setup/">回到設定</Link>
+            <Link href="/setup/">{tr("回到設定", "Back to setup")}</Link>
           </Button>
         </div>
       </div>
@@ -431,11 +438,11 @@ export function InterviewRoom() {
       <div className="mx-auto flex min-h-[80dvh] max-w-md flex-col items-center justify-center gap-5 px-4 text-center" role="status" aria-live="polite">
         <MirAvatar state="thinking" size={110} />
         <div>
-          <p className="text-lg font-bold text-ink">Mir 正在整理你的回饋報告</p>
-          <p className="mt-1 text-sm text-muted">通常只要幾秒鐘</p>
+          <p className="text-lg font-bold text-ink">{tr("Mir 正在整理你的回饋報告", "Mir is writing your feedback")}</p>
+          <p className="mt-1 text-sm text-muted">{tr("通常只要幾秒鐘", "This takes a few seconds")}</p>
         </div>
         <ul className="w-full space-y-2 text-left text-sm">
-          {["計算語速與口頭禪", "檢查 STAR 結構和具體數字", "對照台灣 HR 的紅旗清單", "產生改寫範例與練習計畫"].map((s, i) => (
+          {(lang === "en" ? ["Measuring pace and filler words", "Checking STAR structure and numbers", "Checking for red flags", "Writing examples and your plan"] : ["計算語速與口頭禪", "檢查 STAR 結構和具體數字", "對照台灣 HR 的紅旗清單", "產生改寫範例與練習計畫"]).map((s, i) => (
             <li key={s} className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm" style={{ animation: `fadeIn .4s ${i * 0.25}s both` }}>
               <Loader2 className="size-4 animate-spin text-brand" aria-hidden />
               {s}
@@ -456,13 +463,13 @@ export function InterviewRoom() {
         <Card>
           <CardContent className="flex flex-col items-center text-center">
             <MirAvatar size={104} />
-            <h1 className="mt-4 text-2xl font-bold">{config.singleQuestionId ? "單題練習" : config.quick ? "3 分鐘暖身" : "準備好了嗎？"}</h1>
+            <h1 className="mt-4 text-2xl font-bold">{config.singleQuestionId ? tr("單題練習", "Single question") : config.quick ? tr("3 分鐘暖身", "3-minute warm-up") : tr("準備好了嗎？", "Ready?")}</h1>
             <p className="mt-2 text-ink-2">
               {config.quick
-                ? "三題常見問題，不追問。"
+                ? tr("三題常見問題，不追問。", "Three common questions, no follow-ups.")
                 : config.singleQuestionId
                   ? questions[0]?.text
-                  : `${config.companyName || companyLabel(config.companyType)}・${roleLabel(config.role)}・${difficultyLabel(config.difficulty)}・${questions.length} 題`}
+                  : `${config.companyName || companyLabel(config.companyType, lang)} · ${roleLabel(config.role, lang)} · ${difficultyLabel(config.difficulty, lang)} · ${questions.length} ${tr("題", "questions")}`}
             </p>
 
             <div className="mt-5 w-full space-y-3 text-left">
@@ -470,45 +477,45 @@ export function InterviewRoom() {
                 <span className="flex flex-col">
                   <span className="flex items-center gap-2 font-bold">
                     {mode === "voice" ? <Mic className="size-5 text-brand" aria-hidden /> : <Keyboard className="size-5 text-brand" aria-hidden />}
-                    {mode === "voice" ? "用說的回答" : "用打字回答"}
+                    {mode === "voice" ? tr("用說的回答", "Answer by voice") : tr("用打字回答", "Answer by typing")}
                   </span>
-                  {mode === "voice" && <span className="pl-7 text-xs text-muted">MirWork 不保存錄音</span>}
+                  {mode === "voice" && <span className="pl-7 text-xs text-muted">{tr("MirWork 不保存錄音", "MirWork doesn't store recordings")}</span>}
                 </span>
                 <button type="button" onClick={() => setMode(mode === "voice" ? "text" : "voice")} className="cursor-pointer text-sm font-bold text-brand underline-offset-4 hover:underline">
-                  改成{mode === "voice" ? "打字" : "語音"}
+                  {mode === "voice" ? tr("改成打字", "Switch to typing") : tr("改成語音", "Switch to voice")}
                 </button>
               </div>
               <label className="flex items-center justify-between rounded-xl bg-canvas px-4 py-3">
                 <span className="flex items-center gap-2 font-bold">
                   <Volume2 className="size-5 text-brand" aria-hidden />
-                  Mir 朗讀題目
+                  {tr("Mir 朗讀題目", "Mir reads questions aloud")}
                 </span>
-                <Switch checked={ttsOn} onCheckedChange={setTtsOn} aria-label="Mir 朗讀題目" />
+                <Switch checked={ttsOn} onCheckedChange={setTtsOn} aria-label={tr("Mir 朗讀題目", "Mir reads questions aloud")} />
               </label>
               <label className="flex items-center justify-between rounded-xl bg-canvas px-4 py-3">
                 <span className="flex flex-col">
                   <span className="flex items-center gap-2 font-bold">
                     <Camera className="size-5 text-brand" aria-hidden />
-                    看自己的表情
+                    {tr("看自己的表情", "See yourself on camera")}
                   </span>
-                  <span className="pl-7 text-xs text-muted">只在本機顯示，不錄影</span>
+                  <span className="pl-7 text-xs text-muted">{tr("只在本機顯示，不錄影", "Shown only on your device, never recorded")}</span>
                 </span>
-                <Switch checked={camOn} onCheckedChange={setCamOn} aria-label="開啟鏡頭" />
+                <Switch checked={camOn} onCheckedChange={setCamOn} aria-label={tr("開啟鏡頭", "Camera")} />
               </label>
-              {camError && <p className="text-sm text-warn">無法開啟鏡頭，可能沒有權限。沒關係，不開也可以練習。</p>}
+              {camError && <p className="text-sm text-warn">{tr("無法開啟鏡頭，可能沒有權限。不開也可以練習。", "Couldn't open the camera. You can practise without it.")}</p>}
               {(voiceUnsupported || app) && mode === "voice" && (
                 <p className="rounded-xl bg-warn-tint px-4 py-3 text-sm text-warn">
-                  {app ? `你正在用 ${app} 內建瀏覽器，語音辨識可能無法使用。建議點右上角「⋯」改用 Chrome 或 Safari 開啟。` : "這個瀏覽器不支援語音辨識，開始後會自動改用打字模式。建議使用 Chrome 或 Safari。"}
+                  {app ? tr(`你正在用 ${app} 內建瀏覽器，語音辨識可能無法使用。建議改用 Chrome 或 Safari 開啟。`, `You're in ${app}'s in-app browser, where voice may not work. Open this page in Chrome or Safari.`) : tr("這個瀏覽器不支援語音辨識，開始後會改用打字。建議使用 Chrome 或 Safari。", "This browser doesn't support speech recognition, so you'll type instead. Chrome or Safari work best.")}
                 </p>
               )}
             </div>
 
-            <p className="mt-4 text-sm text-muted">緊張很正常，隨時可以暫停或結束。</p>
+            <p className="mt-4 text-sm text-muted">{tr("緊張很正常，隨時可以暫停或結束。", "Nerves are normal. You can stop at any time.")}</p>
             <Button size="xl" className="mt-6 w-full" onClick={begin}>
-              開始面試
+              {tr("開始面試", "Start interview")}
             </Button>
             <Link href="/setup/" className="mt-3 text-sm font-bold text-muted hover:text-ink hover:underline">
-              修改設定
+              {tr("修改設定", "Change settings")}
             </Link>
           </CardContent>
         </Card>
@@ -535,23 +542,24 @@ export function InterviewRoom() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between text-xs font-bold text-ink-2">
               <span>
-                第 {Math.min(qIndex + 1, questions.length)} / {questions.length} 題{current?.isFollowUp ? "・追問" : ""}
+                {tr(`第 ${Math.min(qIndex + 1, questions.length)} / ${questions.length} 題`, `Question ${Math.min(qIndex + 1, questions.length)} of ${questions.length}`)}
+                {current?.isFollowUp ? tr("・追問", " · follow-up") : ""}
               </span>
-              <span className="tabular-nums" aria-label={`已進行 ${formatClock(totalElapsed)}`}>
+              <span className="tabular-nums" aria-label={tr(`已進行 ${formatClock(totalElapsed)}`, `Elapsed ${formatClock(totalElapsed)}`)}>
                 {formatClock(totalElapsed)}
               </span>
             </div>
-            <Progress value={progressPct} className="mt-1.5 h-1.5" aria-label="面試進度" />
+            <Progress value={progressPct} className="mt-1.5 h-1.5" aria-label={tr("面試進度", "Interview progress")} />
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setTtsOn(!ttsOn)} aria-label={ttsOn ? "關閉朗讀" : "開啟朗讀"} aria-pressed={ttsOn}>
+          <Button variant="ghost" size="icon" onClick={() => setTtsOn(!ttsOn)} aria-label={ttsOn ? tr("關閉朗讀", "Mute Mir") : tr("開啟朗讀", "Unmute Mir")} aria-pressed={ttsOn}>
             {ttsOn ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setCamOn(!camOn)} aria-label={camOn ? "關閉鏡頭" : "開啟鏡頭"} aria-pressed={camOn}>
+          <Button variant="ghost" size="icon" onClick={() => setCamOn(!camOn)} aria-label={camOn ? tr("關閉鏡頭", "Turn camera off") : tr("開啟鏡頭", "Turn camera on")} aria-pressed={camOn}>
             {camOn ? <Camera aria-hidden /> : <CameraOff aria-hidden />}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setConfirmExit(true)}>
             <X aria-hidden />
-            結束
+            {tr("結束", "End")}
           </Button>
         </div>
       </div>
@@ -559,14 +567,14 @@ export function InterviewRoom() {
       {confirmExit && (
         <div role="alertdialog" aria-modal="true" aria-labelledby="exit-title" className="fixed inset-0 z-50 grid place-items-center bg-ink/40 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <h2 id="exit-title" className="text-lg font-bold">要結束這次面試嗎？</h2>
+            <h2 id="exit-title" className="text-lg font-bold">{tr("要結束這次面試嗎？", "End this interview?")}</h2>
             <p className="mt-2 text-sm text-ink-2">
-              {answerCount > 0 ? `你已經回答 ${answerCount} 題，結束後會用這些回答產生報告。` : "你還沒有回答任何題目，結束後會回到設定頁。"}
+              {answerCount > 0 ? tr(`你已經回答 ${answerCount} 題，結束後會用這些回答產生報告。`, `You've answered ${answerCount}. We'll build your report from those answers.`) : tr("你還沒有回答任何題目，結束後會回到設定頁。", "You haven't answered anything yet, so you'll go back to setup.")}
             </p>
             <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
-              <Button onClick={endEarly}>{answerCount > 0 ? "結束並看報告" : "回到設定"}</Button>
+              <Button onClick={endEarly}>{answerCount > 0 ? tr("結束並看報告", "End and see report") : tr("回到設定", "Back to setup")}</Button>
               <Button variant="outline" onClick={() => setConfirmExit(false)} autoFocus>
-                繼續面試
+                {tr("繼續面試", "Keep going")}
               </Button>
             </div>
           </div>
@@ -579,7 +587,7 @@ export function InterviewRoom() {
             <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span className="flex-1">{notice}</span>
             <button type="button" className="cursor-pointer font-bold underline" onClick={() => setNotice(null)}>
-              知道了
+              {tr("知道了", "OK")}
             </button>
           </div>
         )}
@@ -588,13 +596,20 @@ export function InterviewRoom() {
         <div className="flex items-start gap-3 sm:gap-4">
           <MirAvatar state={avatar} size={72} className="shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-muted">面試官 Mir</p>
+            <p className="text-xs font-bold text-muted">{tr("面試官 Mir", "Mir, your interviewer")}</p>
             <div className="mt-1 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-[15px] leading-relaxed text-ink-2 shadow-sm" aria-live="polite">
-              {phase === "thinking" ? <span className="text-muted">（Mir 正在想…）</span> : mirLine}
+              {phase === "thinking" ? (
+                <span className="text-muted">{tr("（Mir 正在想…）", "(Mir is thinking…)")}</span>
+              ) : current && mirLine.includes(current.text) ? (
+                // 題目已顯示在下方卡片，泡泡只留開場／銜接語，避免同一句出現兩次
+                mirLine.replace(current.text, "").trim() || tr("請作答。", "Over to you.")
+              ) : (
+                mirLine
+              )}
             </div>
             {avatar === "speaking" && (
               <button type="button" onClick={stopSpeaking} className="mt-1.5 cursor-pointer text-xs font-bold text-brand hover:underline">
-                略過朗讀 ›
+                {tr("略過朗讀 ›", "Skip ›")}
               </button>
             )}
           </div>
@@ -605,11 +620,14 @@ export function InterviewRoom() {
           <Card className="mt-5">
             <CardContent>
               <div className="flex flex-wrap items-center gap-2">
-                {current.isFollowUp ? <Badge variant="warn">追問</Badge> : <Badge>第 {qIndex + 1} 題</Badge>}
-                {meta?.trap && !current.isFollowUp && <Badge variant="outline">常見陷阱題</Badge>}
-                <span className="text-xs text-muted">建議 {minSec < 60 ? `${minSec} 秒` : `${Math.round(minSec / 60)} 分鐘`}–{maxSec < 60 ? `${maxSec} 秒` : `${Math.round((maxSec / 60) * 10) / 10} 分鐘`}</span>
+                {current.isFollowUp ? <Badge variant="warn">{tr("追問", "Follow-up")}</Badge> : <Badge>{tr(`第 ${qIndex + 1} 題`, `Question ${qIndex + 1}`)}</Badge>}
+                {meta?.trap && !current.isFollowUp && <Badge variant="outline">{tr("常見陷阱題", "Common trap")}</Badge>}
+                <span className="text-xs text-muted">
+                  {tr("建議 ", "Aim for ")}
+                  {minSec < 60 ? `${minSec}${tr(" 秒", "s")}` : `${Math.round(minSec / 60)}${tr(" 分鐘", " min")}`}–{maxSec < 60 ? `${maxSec}${tr(" 秒", "s")}` : `${Math.round((maxSec / 60) * 10) / 10}${tr(" 分鐘", " min")}`}
+                </span>
               </div>
-              {current.isFollowUp && current.parentText && <p className="mt-3 text-sm text-muted">延續：「{current.parentText}」</p>}
+              {current.isFollowUp && current.parentText && <p className="mt-3 text-sm text-muted">{tr(`延續：「${current.parentText}」`, `Following up on: "${current.parentText}"`)}</p>}
               <h1 className="mt-3 font-display text-xl font-semibold leading-snug text-ink sm:text-2xl">{current.text}</h1>
               {allowHint && meta && (
                 <div className="mt-3">
@@ -620,17 +638,17 @@ export function InterviewRoom() {
                     className="inline-flex cursor-pointer items-center gap-1.5 text-sm font-bold text-brand hover:underline"
                   >
                     <Lightbulb className="size-4" aria-hidden />
-                    {showHint ? "收起提示" : "看提示：HR 想知道什麼？"}
+                    {showHint ? tr("收起提示", "Hide hint") : tr("看提示：HR 想知道什麼？", "Hint: what is the interviewer looking for?")}
                   </button>
                   {showHint && (
                     <div className="mt-2 rounded-xl bg-canvas px-4 py-3 text-sm text-ink-2">
                       <p>{meta.intent}</p>
-                      {meta.tip && <p className="mt-1.5 font-bold text-ink">💡 {meta.tip}</p>}
+                      {meta.tip && <p className="mt-1.5 font-bold text-ink">{meta.tip}</p>}
                       {config.difficulty === "warmup" && !current.isFollowUp && (
                         <details className="mt-2">
-                          <summary className="cursor-pointer font-bold text-brand">暖身限定：偷看範例回答</summary>
+                          <summary className="cursor-pointer font-bold text-brand">{tr("看範例回答", "See an example answer")}</summary>
                           <p className="mt-1.5 leading-relaxed">{meta.modelAnswer}</p>
-                          <p className="mt-1 text-xs text-muted">看完用你自己的經驗講一次，不用照背。</p>
+                          <p className="mt-1 text-xs text-muted">{tr("看完用你自己的經驗講一次，不用照背。", "Then say it with your own experience; don't memorise it.")}</p>
                         </details>
                       )}
                     </div>
@@ -649,16 +667,16 @@ export function InterviewRoom() {
                 <div className="flex items-center justify-between">
                   <span className={cn("flex items-center gap-2 text-sm font-bold", sub === "recording" ? "text-bad" : "text-muted")}>
                     {sub === "recording" && <span className="size-2.5 animate-pulse rounded-full bg-bad" aria-hidden />}
-                    {sub === "recording" ? "錄音中" : sub === "review" ? "確認你的回答" : "按下麥克風開始回答"}
+                    {sub === "recording" ? tr("錄音中", "Recording") : sub === "review" ? tr("確認你的回答", "Review your answer") : tr("按下麥克風開始回答", "Tap the mic to answer")}
                   </span>
                   <span className={cn("text-sm font-bold tabular-nums", answerSec > maxSec ? "text-warn" : "text-ink-2")}>{formatClock(answerSec)}</span>
                 </div>
                 <Waveform stream={micStream} active={sub === "recording"} className="mt-3 h-12 w-full" />
-                {answerSec > maxSec && sub === "recording" && <p className="mt-2 text-sm font-bold text-warn">已超過建議時間，可以準備收尾了。</p>}
+                {answerSec > maxSec && sub === "recording" && <p className="mt-2 text-sm font-bold text-warn">{tr("已超過建議時間，可以準備收尾了。", "You're over the suggested time. Start wrapping up.")}</p>}
                 {sub === "review" && editing ? (
                   <>
                     <label htmlFor="edit-transcript" className="sr-only">
-                      修改辨識文字
+                      {tr("修改辨識文字", "Edit transcript")}
                     </label>
                     <textarea
                       id="edit-transcript"
@@ -670,14 +688,14 @@ export function InterviewRoom() {
                     />
                   </>
                 ) : (
-                  <div className="mt-3 min-h-20 rounded-xl bg-canvas px-3 py-2 text-[15px] leading-relaxed text-ink" aria-live="polite" aria-label="即時逐字稿">
-                    {liveText || <span className="text-muted">{sub === "recording" ? "請開始說話，逐字稿會出現在這裡…" : "（還沒有內容）"}</span>}
+                  <div className="mt-3 min-h-20 rounded-xl bg-canvas px-3 py-2 text-[15px] leading-relaxed text-ink" aria-live="polite" aria-label={tr("即時逐字稿", "Live transcript")}>
+                    {liveText || <span className="text-muted">{sub === "recording" ? tr("請開始說話，逐字稿會出現在這裡…", "Start speaking. Your words will appear here…") : tr("（還沒有內容）", "(Nothing yet)")}</span>}
                   </div>
                 )}
                 {sub === "review" && !editing && liveText && (
                   <button type="button" onClick={() => setEditing(true)} className="mt-2 inline-flex cursor-pointer items-center gap-1 text-sm font-bold text-brand hover:underline">
                     <Pencil className="size-3.5" aria-hidden />
-                    辨識有錯字？直接修改
+                    {tr("辨識有錯字？直接修改", "Fix transcription errors")}
                   </button>
                 )}
               </div>
@@ -685,9 +703,9 @@ export function InterviewRoom() {
               <div className="rounded-2xl border border-line-soft bg-white p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <label htmlFor="typed-answer" className="text-sm font-bold text-ink-2">
-                    輸入你的回答
+                    {tr("輸入你的回答", "Your answer")}
                   </label>
-                  <span className="text-xs text-muted">{typed.length} 字</span>
+                  <span className="text-xs text-muted">{lang === "en" ? `${typed.trim() ? typed.trim().split(/\s+/).length : 0} words` : `${typed.length} 字`}</span>
                 </div>
                 <textarea
                   id="typed-answer"
@@ -706,7 +724,7 @@ export function InterviewRoom() {
         {phase === "thinking" && (
           <p className="mt-6 flex items-center justify-center gap-2 text-sm text-muted" role="status">
             <Loader2 className="size-4 animate-spin" aria-hidden />
-            Mir 正在聽你的回答…
+            {tr("Mir 正在聽你的回答…", "Mir is listening to your answer…")}
           </p>
         )}
       </div>
@@ -719,30 +737,30 @@ export function InterviewRoom() {
               <>
                 <Button variant="ghost" onClick={reRecord} disabled={busy}>
                   <RotateCcw aria-hidden />
-                  重來
+                  {tr("重來", "Restart")}
                 </Button>
                 <button
                   type="button"
                   onClick={stopRecording}
                   className="grid size-16 cursor-pointer place-items-center rounded-full bg-bad text-white shadow-lg transition-transform active:scale-95"
-                  aria-label="完成回答（停止錄音）"
+                  aria-label={tr("完成回答（停止錄音）", "Finish answer (stop recording)")}
                 >
                   <Square className="size-6 fill-current" aria-hidden />
                 </button>
-                <span className="w-[76px] text-right text-xs font-bold text-muted">按方塊完成</span>
+                <span className="w-[76px] text-right text-xs font-bold text-muted">{tr("按方塊完成", "Tap to finish")}</span>
               </>
             ) : sub === "review" ? (
               <>
                 <Button variant="ghost" onClick={reRecord}>
                   <RotateCcw aria-hidden />
-                  重答
+                  {tr("重答", "Redo")}
                 </Button>
-                <Button variant="outline" onClick={startRecording} aria-label="繼續錄音補充">
+                <Button variant="outline" onClick={startRecording} aria-label={tr("繼續錄音補充", "Record more")}>
                   <Mic aria-hidden />
-                  補充
+                  {tr("補充", "Add more")}
                 </Button>
                 <Button onClick={() => submit(false)} disabled={!sr.text.trim()}>
-                  送出
+                  {tr("送出", "Submit")}
                   <ChevronRight aria-hidden />
                 </Button>
               </>
@@ -750,7 +768,7 @@ export function InterviewRoom() {
               <>
                 <Button variant="ghost" onClick={() => submit(true)} disabled={phase !== "answering"}>
                   <SkipForward aria-hidden />
-                  略過
+                  {tr("略過", "Skip")}
                 </Button>
                 <button
                   ref={micBtnRef}
@@ -758,14 +776,14 @@ export function InterviewRoom() {
                   onClick={startRecording}
                   disabled={phase !== "answering"}
                   className="relative grid size-16 cursor-pointer place-items-center rounded-full bg-brand text-white shadow-lg transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="開始回答（開始錄音）"
+                  aria-label={tr("開始回答（開始錄音）", "Start answering (record)")}
                 >
                   {phase === "answering" && <span aria-hidden className="absolute inset-0 rounded-full bg-brand/40 animate-pulse-ring" />}
                   <Mic className="relative size-7" aria-hidden />
                 </button>
                 <Button variant="ghost" onClick={() => setMode("text")} disabled={phase !== "answering"}>
                   <Keyboard aria-hidden />
-                  打字
+                  {tr("打字", "Type")}
                 </Button>
               </>
             )
@@ -773,16 +791,16 @@ export function InterviewRoom() {
             <>
               <Button variant="ghost" onClick={() => submit(true)} disabled={phase !== "answering"}>
                 <SkipForward aria-hidden />
-                略過
+                {tr("略過", "Skip")}
               </Button>
               {srSupported() && config.mode === "voice" && (
                 <Button variant="ghost" onClick={() => setMode("voice")} disabled={phase !== "answering"}>
                   <Mic aria-hidden />
-                  改用語音
+                  {tr("改用語音", "Use voice")}
                 </Button>
               )}
               <Button onClick={() => submit(false)} disabled={phase !== "answering" || !typed.trim()}>
-                送出
+                {tr("送出", "Submit")}
                 <ChevronRight aria-hidden />
               </Button>
             </>
@@ -802,7 +820,7 @@ function SelfView({ stream }: { stream: MediaStream }) {
   }, [stream]);
   return (
     <div className="fixed bottom-28 right-4 z-30 overflow-hidden rounded-2xl border-2 border-white shadow-lg sm:bottom-24">
-      <video ref={videoRef} autoPlay muted playsInline className="h-28 w-[150px] -scale-x-100 bg-ink object-cover" aria-label="你的鏡頭畫面（僅本機顯示）" />
+      <video ref={videoRef} autoPlay muted playsInline className="h-28 w-[150px] -scale-x-100 bg-ink object-cover" aria-label="Camera preview" />
     </div>
   );
 }
