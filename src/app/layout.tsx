@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { LANG_INIT_SCRIPT, T } from "@/lib/i18n-shared";
+import { LangSync } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: {
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: LANG_INIT_SCRIPT }} />
       </head>
       <body className="min-h-dvh antialiased">
+        <LangSync />
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-white focus:px-4 focus:py-2 focus:shadow">
           <T zh="跳到主要內容" en="Skip to content" />
         </a>

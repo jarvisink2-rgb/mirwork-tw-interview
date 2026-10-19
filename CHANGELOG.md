@@ -27,6 +27,7 @@ Every build was reviewed as three personas, plus mobile (375 px), Lighthouse (mo
 - All emoji removed. Headings use the same sans-serif as the body.
 - Home hero now shows what the product actually looks like (question, waveform, live transcript) instead of marketing copy.
 - Fixed an 8 px horizontal scroll on the home page at 375 px.
+- Found on the live site in a real Chrome: a browser extension edited the page, React re-rendered the root and reset the language to Chinese. The saved preference is now re-applied after every load (tested by simulating the extension).
 
 **Checks**: an automated test switches to EN and finds zero Chinese text on Home, Setup, Interview, Report (own and example), Progress and 404. Lighthouse (mobile): Performance 92–95, Accessibility 100, Best Practices 100.
 

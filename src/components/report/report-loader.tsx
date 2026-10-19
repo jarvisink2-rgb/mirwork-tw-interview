@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import type { Session } from "@/lib/types";
 import { getSession, listSessions } from "@/lib/storage";
 import { ReportView } from "./report-view";
-import { T } from "@/lib/i18n";
+import { T, getLang } from "@/lib/i18n";
 
 export function ReportLoader() {
   const params = useSearchParams();
@@ -18,7 +18,7 @@ export function ReportLoader() {
   useEffect(() => {
     if (!id) return setState({ status: "missing" });
     if (id === "demo") {
-      import("@/lib/data/demo").then((m) => setState({ status: "ok", session: m.buildDemoSession(document.documentElement.dataset.lang === "en" ? "en" : "zh"), previous: null }));
+      import("@/lib/data/demo").then((m) => setState({ status: "ok", session: m.buildDemoSession(getLang()), previous: null }));
       return;
     }
     const s = getSession(id);
