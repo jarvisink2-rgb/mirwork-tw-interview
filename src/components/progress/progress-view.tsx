@@ -48,12 +48,12 @@ export function ProgressView() {
   }, [sessions]);
 
   if (sessions === null) {
-    return <div className="mt-6 min-h-[110vh] animate-pulse rounded-2xl bg-white" role="status" aria-label="載入中" />;
+    return <div className="mt-6 min-h-[70vh] animate-pulse rounded-2xl bg-white" role="status" aria-label="載入中" />;
   }
 
   if (!rows.length) {
     return (
-      <Card className="mt-6">
+      <Card className="mt-6 flex min-h-[70vh] items-center justify-center">
         <CardContent className="flex flex-col items-center py-12 text-center">
           <ChartLine className="size-8 text-brand" aria-hidden />
           <h2 className="mt-3 text-lg font-bold">還沒有練習紀錄</h2>

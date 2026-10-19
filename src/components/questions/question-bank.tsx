@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ExternalLink, Mic, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -100,14 +100,16 @@ function QuestionCard({ q, open, onToggle, onPractice }: { q: Question; open: bo
 
 export function QuestionBank() {
   const router = useRouter();
-  const params = useSearchParams();
   const [company, setCompany] = useState<CompanyType | "all">("all");
   const [kind, setKind] = useState<Kind>("all");
   const [focus, setFocus] = useState<FocusTopic | null>(null);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
+  const [showAll, setShowAll] = useState(false);
+
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
     const f = params.get("focus") as FocusTopic | null;
     if (f && FOCUS_TOPICS.some((x) => x.id === f)) {
       setFocus(f);
@@ -115,8 +117,11 @@ export function QuestionBank() {
       if (first) setOpenId(first.id);
     }
     const id = params.get("q");
-    if (id) setOpenId(id);
-  }, [params]);
+    if (id) {
+      setOpenId(id);
+      setShowAll(true);
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     const ql = query.trim().toLowerCase();
@@ -208,10 +213,17 @@ export function QuestionBank() {
         </div>
       ) : (
         <ul className="mt-3 space-y-3">
-          {filtered.map((q) => (
+          {(showAll ? filtered : filtered.slice(0, 12)).map((q) => (
             <QuestionCard key={q.id} q={q} open={openId === q.id} onToggle={() => setOpenId(openId === q.id ? null : q.id)} onPractice={() => practice(q)} />
           ))}
         </ul>
+      )}
+      {!showAll && filtered.length > 12 && (
+        <div className="mt-4 text-center">
+          <Button variant="outline" onClick={() => setShowAll(true)}>
+            顯示全部 {filtered.length} 題
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -8,6 +8,27 @@ Every build was reviewed as three personas, plus mobile (375 px), Lighthouse (mo
 
 ---
 
+## v0.6: Owner feedback — no unverifiable claims, much less text (2026-10-19)
+
+**Feedback from the project owner**
+- Remove anything that isn't real data: "MirWork 已完成數萬場模擬面試", "社群成員錄取於 Meta・Google・Roblox・Amazon・Netflix".
+- "Simplify the GUI. It looks too wordy and filled up."
+
+**Changed**
+- Removed the social-proof strip, the example metrics in the hero card, and the made-up four-session trend on the progress page. Every number left in the app is either the user's own result or cited on `/research`.
+- Home: one headline, one sentence, two buttons, three one-line steps and one 待業中 banner. The stats wall and the 5-problem cards now live only on `/research`.
+- Setup: only 狀況, 公司類型 and 職缺 are shown, as simple chips. Difficulty, focus topics, language, mode, length, company name and résumé sit under a collapsed **更多設定**. The start bar says just "公司・職缺・約 N 分鐘 [開始]".
+- Report: the total score and radar share one card. Each red flag is title, quote and fix, with "為什麼扣分" collapsed. Model answers are collapsed. "下一步" is three rows. The bottom CTA block is gone.
+- Ready screen, progress, resources, question bank and footer: subtitles and explanations cut to one line or removed. The question bank shows 12 questions first, with "顯示全部".
+- Interview: Mir's avatar only shows "listening" while you're actually recording. Focus moves to the mic button or text box on every new question, for keyboard and screen-reader users.
+
+**Lighthouse (mobile)**: Performance 91–96 on every page, Accessibility 100, Best Practices 100, SEO 100.
+
+## v0.5: Shipped (2026-10-19)
+
+- GitHub: `jarvisink2-rgb/mirwork-tw-interview`. Vercel: `mirwork-tw-interview.vercel.app`. Every push to `main` redeploys automatically.
+- Mir now prefers natural zh-TW voices (Google 國語（臺灣）, Meijia, Flo, Sandy…) over macOS character voices like Grandma, Grandpa and Rocko, which were being picked first.
+
 ## v0.4: Persona round 3, English mode and résumé upload (2026-10-19)
 
 **Found**

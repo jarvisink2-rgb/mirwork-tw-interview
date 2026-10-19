@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { QuestionBank } from "@/components/questions/question-bank";
 
 export const metadata: Metadata = {
@@ -11,9 +10,7 @@ export default function QuestionsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <h1 className="text-2xl font-bold sm:text-3xl">面試題庫</h1>
-      <Suspense fallback={<div className="mt-6 h-96 animate-pulse rounded-2xl bg-white" />}>
-        <QuestionBank />
-      </Suspense>
+      <QuestionBank />
     </div>
   );
 }
