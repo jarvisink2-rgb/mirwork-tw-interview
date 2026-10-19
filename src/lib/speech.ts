@@ -25,14 +25,24 @@ function loadVoices(): Promise<SpeechSynthesisVoice[]> {
 
 function pickVoice(voices: SpeechSynthesisVoice[], lang: "zh" | "en") {
   if (lang === "zh") {
+    const tw = voices.filter((v) => /zh[-_]TW/i.test(v.lang) || /台灣|臺灣|Taiwan/i.test(v.name));
+    // 優先選自然的女聲／男聲；避開 macOS 的 Grandma、Grandpa、Rocko 這類角色語音
     return (
-      voices.find((v) => /zh[-_]TW/i.test(v.lang)) ||
-      voices.find((v) => /台灣|臺灣|Taiwan|Mei-?Jia/i.test(v.name)) ||
+      tw.find((v) => /Google/i.test(v.name)) ||
+      tw.find((v) => /Mei-?Jia/i.test(v.name)) ||
+      tw.find((v) => /Flo|Sandy|Shelley|Reed|Eddy/i.test(v.name)) ||
+      tw.find((v) => !/Grandma|Grandpa|Rocko/i.test(v.name)) ||
       voices.find((v) => /zh[-_]HK/i.test(v.lang)) ||
       voices.find((v) => /^zh/i.test(v.lang))
     );
   }
-  return voices.find((v) => /en[-_]US/i.test(v.lang) && /Google|Samantha|Natural/i.test(v.name)) || voices.find((v) => /^en/i.test(v.lang));
+  const us = voices.filter((v) => /en[-_]US/i.test(v.lang));
+  return (
+    us.find((v) => /Google US English/i.test(v.name)) ||
+    us.find((v) => /Samantha|Natural/i.test(v.name)) ||
+    us.find((v) => !/Grandma|Grandpa|Rocko|Bad News|Bells|Boing|Bubbles|Cellos|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Albert|Bahh/i.test(v.name)) ||
+    voices.find((v) => /^en/i.test(v.lang))
+  );
 }
 
 export function ttsSupported() {
