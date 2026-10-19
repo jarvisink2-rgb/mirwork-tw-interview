@@ -2,7 +2,7 @@ import type { FocusTopic, InterviewConfig, PlannedQuestion, Question } from "@/l
 import { QUESTIONS } from "@/lib/data/questions";
 import { companyLabel, roleLabel } from "@/lib/data/options";
 import { buildReport, measureLength, questionMeta } from "@/lib/analysis/analyze";
-import { NUMBER_RE, RESEARCH_SIGNALS, RESUME_LEXICON, STAR_EN, STAR_ZH, TRIVIAL_NUMBER } from "@/lib/analysis/lexicon";
+import { NUMBER_RE, RESEARCH_SIGNALS, STAR_EN, STAR_ZH, TRIVIAL_NUMBER } from "@/lib/analysis/lexicon";
 import type { InterviewAI } from "./provider";
 import { resumeQuestions } from "./resume-questions";
 
