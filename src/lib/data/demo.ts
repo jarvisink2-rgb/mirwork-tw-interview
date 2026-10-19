@@ -77,11 +77,3 @@ export function buildDemoSession(): Session {
     demo: true,
   };
 }
-
-/** 進度頁的示範趨勢（只用來展示圖表長相，會清楚標示為示範） */
-export const DEMO_TREND = [
-  { date: "2026-10-05T20:10:00+08:00", total: 51, dims: { expression: 48, logic: 50, expertise: 55, confidence: 52, fit: 50 } },
-  { date: "2026-10-09T21:40:00+08:00", total: 58, dims: { expression: 56, logic: 57, expertise: 60, confidence: 58, fit: 59 } },
-  { date: "2026-10-13T19:05:00+08:00", total: 63, dims: { expression: 66, logic: 60, expertise: 62, confidence: 63, fit: 64 } },
-  { date: "2026-10-18T14:30:00+08:00", total: 67, dims: { expression: 70, logic: 64, expertise: 68, confidence: 66, fit: 67 } },
-];

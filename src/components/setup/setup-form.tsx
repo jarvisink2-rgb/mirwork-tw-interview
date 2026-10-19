@@ -13,12 +13,11 @@ import { resumeQuestions } from "@/lib/ai/resume-questions";
 import { cn, safeStorage } from "@/lib/utils";
 import { PREF_LANG_EVENT, PREF_LANG_KEY } from "@/components/lang-toggle";
 
-function Section({ title, hint, children, id }: { title: string; hint?: string; children: React.ReactNode; id?: string }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <fieldset className="border-0 p-0" id={id}>
-      <legend className="font-display text-lg font-semibold text-ink">{title}</legend>
-      {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
-      <div className="mt-3">{children}</div>
+    <fieldset className="border-0 p-0">
+      <legend className="text-sm font-bold text-muted">{title}</legend>
+      <div className="mt-2.5">{children}</div>
     </fieldset>
   );
 }
@@ -125,13 +124,16 @@ export function SetupForm() {
     router.push("/interview/");
   };
 
-  const tailored = resumeQuestions(config.resumeKeywords).slice(0, config.length >= 7 ? 2 : 1);
+  const tailored = resumeQuestions(config.resumeKeywords)[0];
   const minutes = { 3: 7, 5: 12, 7: 17 }[config.length];
   const company = COMPANY_TYPES.find((c) => c.id === config.companyType)!;
+  const role = ROLES.find((r) => r.id === config.role)!;
+  const difficulty = DIFFICULTIES.find((d) => d.id === config.difficulty)!;
+  const focusOptions = FOCUS_TOPICS.filter((f) => !(config.lang === "en" && ["english", "military", "salary", "gap", "overtime"].includes(f.id)));
 
   return (
     <form
-      className="mt-8 space-y-6"
+      className="mt-6 space-y-4"
       onSubmit={(e) => {
         e.preventDefault();
         start();
@@ -139,125 +141,77 @@ export function SetupForm() {
       aria-busy={!hydrated}
     >
       <Card>
-        <CardContent className="space-y-7">
-          <Section title="你現在的狀況" hint="Mir 會依你的狀況調整題目，例如待業中會練到空窗期。">
-            <div role="radiogroup" aria-label="你現在的狀況" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <CardContent className="space-y-6">
+          <Section title="你的狀況">
+            <div role="radiogroup" aria-label="你的狀況" className="flex flex-wrap gap-2">
               {SITUATIONS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={config.situation === s.id}
-                  onClick={() => update("situation", s.id as Situation)}
-                  className={cn(
-                    "min-h-16 cursor-pointer rounded-xl border px-3 py-2.5 text-left transition-colors",
-                    config.situation === s.id ? "border-brand bg-brand-tint" : "border-line bg-white hover:border-brand-line",
-                  )}
-                >
-                  <span className={cn("block text-sm font-bold", config.situation === s.id ? "text-brand-strong" : "text-ink")}>{s.label}</span>
-                  <span className="block text-xs text-muted">{s.desc}</span>
-                </button>
+                <Chip key={s.id} selected={config.situation === s.id} onClick={() => update("situation", s.id as Situation)}>
+                  {s.label}
+                </Chip>
               ))}
             </div>
           </Section>
 
-          <Section title="公司類型" hint="台灣不同類型的公司，面試重點差很多。">
-            <div role="radiogroup" aria-label="公司類型" className="grid gap-2 sm:grid-cols-2">
+          <Section title="公司類型">
+            <div role="radiogroup" aria-label="公司類型" className="flex flex-wrap gap-2">
               {COMPANY_TYPES.map((c) => (
-                <button
+                <Chip
                   key={c.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={config.companyType === c.id}
+                  selected={config.companyType === c.id}
                   onClick={() => {
                     update("companyType", c.id as CompanyType);
                     if (c.id === "foreign" && config.lang === "zh") update("lang", "en");
                   }}
-                  className={cn(
-                    "cursor-pointer rounded-xl border px-4 py-3 text-left transition-colors",
-                    config.companyType === c.id ? "border-brand bg-brand-tint" : "border-line bg-white hover:border-brand-line",
-                  )}
                 >
-                  <span className={cn("block font-bold", config.companyType === c.id ? "text-brand-strong" : "text-ink")}>{c.label}</span>
-                  <span className="block text-xs text-muted">例：{c.examples}</span>
-                </button>
+                  {c.short}
+                </Chip>
               ))}
             </div>
-            <p className="mt-3 rounded-xl bg-canvas px-4 py-3 text-sm text-ink-2">
-              <b>{company.short}面試重點：</b>
-              {company.style}
-            </p>
           </Section>
 
-          <Section title="應徵職缺">
-            <div role="radiogroup" aria-label="應徵職缺" className="flex flex-wrap gap-2">
+          <Section title="職缺">
+            <div role="radiogroup" aria-label="職缺" className="flex flex-wrap gap-2">
               {ROLES.map((r) => (
                 <Chip key={r.id} selected={config.role === r.id} onClick={() => update("role", r.id as RoleId)}>
                   {r.label}
                 </Chip>
               ))}
             </div>
-            <label className="mt-4 block text-sm font-bold text-ink" htmlFor="company-name">
-              公司名稱（選填）
-            </label>
-            <input
-              id="company-name"
-              value={config.companyName ?? ""}
-              onChange={(e) => update("companyName", e.target.value.slice(0, 30))}
-              placeholder="例如：台積電、全聯、玉山銀行"
-              className="mt-1.5 h-11 w-full rounded-xl border border-line bg-white px-4 text-[16px] outline-none focus:border-brand"
-            />
           </Section>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="space-y-7">
+      <details className="group rounded-2xl border border-line-soft bg-white" open={config.focus.length > 0 || undefined}>
+        <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 font-bold text-ink sm:px-6 [&::-webkit-details-marker]:hidden">
+          更多設定
+          <span className="text-sm font-normal text-muted group-open:hidden">
+            {difficulty.label}・{config.length} 題・{config.mode === "voice" ? "語音" : "打字"}
+          </span>
+        </summary>
+        <div className="space-y-6 border-t border-line-soft px-5 py-5 sm:px-6">
           <Section title="難度">
-            <div role="radiogroup" aria-label="難度" className="grid gap-2 sm:grid-cols-3">
+            <div role="radiogroup" aria-label="難度" className="flex flex-wrap gap-2">
               {DIFFICULTIES.map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={config.difficulty === d.id}
-                  onClick={() => update("difficulty", d.id as Difficulty)}
-                  className={cn(
-                    "cursor-pointer rounded-xl border px-4 py-3 text-left transition-colors",
-                    config.difficulty === d.id ? "border-brand bg-brand-tint" : "border-line bg-white hover:border-brand-line",
-                  )}
-                >
-                  <span className={cn("block font-bold", config.difficulty === d.id ? "text-brand-strong" : "text-ink")}>{d.label}</span>
-                  <span className="block text-xs text-muted">{d.desc}</span>
-                </button>
+                <Chip key={d.id} selected={config.difficulty === d.id} onClick={() => update("difficulty", d.id as Difficulty)}>
+                  {d.label}
+                </Chip>
               ))}
             </div>
+            <p className="mt-2 text-sm text-muted">{difficulty.desc}</p>
           </Section>
 
-          <Section title="想特別練的題目（選填）" hint="台灣面試最常卡關的題目，選了就一定會練到。">
-            <div role="group" aria-label="想特別練的題目" className="flex flex-wrap gap-2">
-              {FOCUS_TOPICS.filter((f) => !(config.lang === "en" && (f.id === "english" || f.id === "military" || f.id === "salary" || f.id === "gap" || f.id === "overtime"))).map((f) => (
+          <Section title="特別想練">
+            <div role="group" aria-label="特別想練的題目" className="flex flex-wrap gap-2">
+              {focusOptions.map((f) => (
                 <Chip key={f.id} role="checkbox" selected={config.focus.includes(f.id)} onClick={() => toggleFocus(f.id)}>
                   {f.label}
                 </Chip>
               ))}
             </div>
-            {config.focus.length > 0 && (
-              <ul className="mt-3 space-y-1 text-sm text-muted">
-                {config.focus.map((f) => {
-                  const t = FOCUS_TOPICS.find((x) => x.id === f)!;
-                  return (
-                    <li key={f}>
-                      <b className="text-ink-2">{t.label}</b>：{t.desc}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
           </Section>
 
           <div className="grid gap-6 sm:grid-cols-3">
-            <Section title="面試語言">
+            <Section title="語言">
               <div role="radiogroup" aria-label="面試語言" className="flex flex-wrap gap-2">
                 <Chip selected={config.lang === "zh"} onClick={() => setLang("zh")}>中文</Chip>
                 <Chip selected={config.lang === "en"} onClick={() => setLang("en")}>English</Chip>
@@ -283,21 +237,27 @@ export function SetupForm() {
               </div>
             </Section>
           </div>
-          {config.lang === "en" && <p className="rounded-xl bg-canvas px-4 py-3 text-sm text-ink-2">English 模式：Mir 會用英文提問和朗讀，題目以外商常見的 6 大題為主；回饋說明仍用中文。</p>}
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardContent>
-          <Section title="上傳履歷或自傳（選填）" hint="Mir 會從你寫的經驗挑一題追問，就像真的面試官一樣。檔案只在你的瀏覽器讀取，不會上傳。">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Section title="公司名稱（選填）">
+            <input
+              id="company-name"
+              aria-label="公司名稱"
+              value={config.companyName ?? ""}
+              onChange={(e) => update("companyName", e.target.value.slice(0, 30))}
+              placeholder="例如：台積電"
+              className="h-11 w-full rounded-xl border border-line bg-white px-4 text-[16px] outline-none focus:border-brand"
+            />
+          </Section>
+
+          <Section title="履歷或自傳（選填）">
+            <div className="flex flex-wrap items-center gap-3">
               <input ref={fileRef} id="resume-file" aria-label="上傳履歷或自傳 PDF" type="file" accept="application/pdf,.pdf" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />
               <Button type="button" variant="soft" onClick={() => fileRef.current?.click()} disabled={resumeState === "reading"}>
                 {resumeState === "reading" ? <Loader2 className="animate-spin" aria-hidden /> : <FileUp aria-hidden />}
-                {resumeState === "reading" ? "讀取中…" : "選擇 PDF"}
+                {resumeState === "reading" ? "讀取中…" : "上傳 PDF"}
               </Button>
               {config.resumeFileName && (
-                <span className="inline-flex items-center gap-2 text-sm text-ink-2">
+                <span className="inline-flex items-center gap-1 text-sm text-ink-2">
                   {config.resumeFileName}
                   <button type="button" onClick={clearResume} className="grid size-8 cursor-pointer place-items-center rounded-full hover:bg-canvas" aria-label="移除履歷">
                     <X className="size-4" aria-hidden />
@@ -305,41 +265,32 @@ export function SetupForm() {
                 </span>
               )}
             </div>
-            <label htmlFor="resume-text" className="mt-4 block text-sm font-bold text-ink">
-              或直接貼上自傳／履歷文字
-            </label>
             <textarea
               id="resume-text"
+              aria-label="或貼上自傳文字"
               value={resumeText}
               onChange={(e) => onPaste(e.target.value)}
-              rows={3}
-              placeholder="例如：大三擔任系學會公關，負責迎新活動社群宣傳…"
-              className="mt-1.5 w-full rounded-xl border border-line bg-white px-4 py-3 text-[16px] outline-none focus:border-brand"
+              rows={2}
+              placeholder="或直接貼上自傳文字"
+              className="mt-3 w-full rounded-xl border border-line bg-white px-4 py-3 text-[16px] outline-none focus:border-brand"
             />
             <div aria-live="polite">
               {resumeError && <p className="mt-2 text-sm font-bold text-bad">{resumeError}</p>}
-              {resumeState === "done" && (config.resumeKeywords?.length ?? 0) === 0 && (
-                <p className="mt-2 text-sm text-warn">沒有找到可以追問的經驗關鍵字（例如專題、實習、社團幹部、證照）。寫得具體一點，Mir 才問得出來。</p>
-              )}
-              {(config.resumeKeywords?.length ?? 0) > 0 && (
-                <div className="mt-3 rounded-xl bg-good-tint p-4 text-sm">
-                  <p className="font-bold text-good">找到 {config.resumeKeywords!.length} 個可以追問的經驗：{config.resumeKeywords!.join("、")}</p>
-                  {config.lang === "zh" && tailored[0] && <p className="mt-1 text-ink-2">Mir 可能會問：「{tailored[0].text}」</p>}
-                </div>
-              )}
+              {resumeState === "done" && (config.resumeKeywords?.length ?? 0) === 0 && <p className="mt-2 text-sm text-warn">沒有找到可以追問的經驗，寫具體一點（專題、實習、社團幹部…）。</p>}
+              {config.lang === "zh" && tailored && <p className="mt-2 text-sm text-good">Mir 會問：「{tailored.text}」</p>}
             </div>
           </Section>
-        </CardContent>
-      </Card>
+        </div>
+      </details>
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-line-soft bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:rounded-2xl sm:border sm:px-5 md:bottom-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-ink-2">
-            <b className="text-ink">{company.short}・{ROLES.find((r) => r.id === config.role)?.label}</b>・{DIFFICULTIES.find((d) => d.id === config.difficulty)?.label}・{config.length} 題（約 {minutes} 分鐘）・{config.lang === "en" ? "English" : "中文"}・{config.mode === "voice" ? "語音" : "打字"}
+        <div className="flex items-center justify-between gap-3">
+          <p className="min-w-0 truncate text-sm text-ink-2">
+            <b className="text-ink">{company.short}・{role.label}</b>・約 {minutes} 分鐘
           </p>
-          <Button type="submit" size="lg" className="w-full sm:w-auto">
+          <Button type="submit" size="lg" className="shrink-0">
             {config.mode === "voice" ? <Mic aria-hidden /> : <Keyboard aria-hidden />}
-            開始面試
+            開始
           </Button>
         </div>
       </div>

@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight, Check, ChevronDown, Flag, Lightbulb, MessageCircle, Repeat, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { RadarChart } from "@/components/charts/radar-chart";
 import { ScoreRing } from "@/components/charts/score-ring";
 import type { AnswerFeedback, Session } from "@/lib/types";
-import { DIM_LABELS, DIM_ORDER, companyLabel, difficultyLabel, roleLabel } from "@/lib/data/options";
+import { companyLabel, difficultyLabel, roleLabel } from "@/lib/data/options";
 import { FILLERS_EN, FILLERS_ZH } from "@/lib/analysis/lexicon";
 import { getLastConfig, setLastConfig, setPendingConfig } from "@/lib/storage";
 import { cn, formatDate } from "@/lib/utils";
@@ -133,14 +132,14 @@ function AnswerItem({ a, index, onRetry, defaultOpen }: { a: AnswerFeedback; ind
             </ol>
           </section>
 
-          <section>
-            <h4 className="flex items-center gap-1.5 text-sm font-bold text-ink">
-              <Sparkles className="size-4 text-good" aria-hidden />
-              改寫範例
-            </h4>
-            <p className="mt-1.5 rounded-xl bg-good-tint px-4 py-3 text-[15px] leading-relaxed text-ink">{a.modelAnswer}</p>
-            <p className="mt-1 text-xs text-muted">範例是結構參考。照抄會被聽出來，請換成你自己的經驗和數字。</p>
-          </section>
+          <details className="rounded-xl bg-good-tint px-4 py-3">
+            <summary className="flex cursor-pointer items-center gap-1.5 text-sm font-bold text-good">
+              <Sparkles className="size-4" aria-hidden />
+              看改寫範例
+            </summary>
+            <p className="mt-2 text-[15px] leading-relaxed text-ink">{a.modelAnswer}</p>
+            <p className="mt-1 text-xs text-muted">參考結構就好，換成你自己的經驗。</p>
+          </details>
 
           {canRetry && (
             <Button variant="soft" onClick={() => onRetry(a.baseId)}>
@@ -184,146 +183,83 @@ export function ReportView({ session, previous }: { session: Session; previous: 
   });
   const firstWeak = report.answers.findIndex((a) => !a.skipped && (a.redFlagIds.length || a.score < 65));
 
+  const planItems = Array.from(new Set([report.plan[0], ...report.plan.filter((p) => p.day === "這週"), report.plan[report.plan.length - 1]])).filter(Boolean).slice(0, 3);
+
+  const configLabel = config.quick
+    ? "3 分鐘暖身"
+    : config.singleQuestionId
+      ? "單題練習"
+      : `${config.companyName || companyLabel(config.companyType)}・${roleLabel(config.role)}・${difficultyLabel(config.difficulty)}`;
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
       {session.demo && (
-        <div className="mb-5 rounded-2xl border border-brand-line bg-brand-tint px-4 py-3 text-sm text-ink-2">
-          <b className="text-brand-strong">這是示範報告。</b>內容是一位資工應屆生的範例回答，分數和回饋由同一套分析器即時產生。
-          <Link href="/setup/" className="ml-1 font-bold text-brand-strong underline">換你試試看 →</Link>
-        </div>
+        <p className="mb-5 rounded-xl bg-brand-tint px-4 py-2.5 text-sm text-ink-2">
+          <b className="text-brand-strong">示範報告</b>：範例回答，由同一套分析器產生。
+          <Link href="/setup/" className="ml-1 font-bold text-brand-strong underline">換你試試 →</Link>
+        </p>
       )}
 
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-muted">{formatDate(session.createdAt)}</p>
           <h1 className="text-2xl font-bold sm:text-3xl">回饋報告</h1>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {config.quick ? (
-              <Badge variant="outline">3 分鐘暖身</Badge>
-            ) : config.singleQuestionId ? (
-              <Badge variant="outline">單題練習</Badge>
-            ) : (
-              <>
-                <Badge variant="outline">{config.companyName || companyLabel(config.companyType)}</Badge>
-                <Badge variant="outline">{roleLabel(config.role)}</Badge>
-                <Badge variant="outline">{difficultyLabel(config.difficulty)}</Badge>
-              </>
-            )}
-            <Badge variant="outline">{config.lang === "en" ? "English" : "中文"}・{config.mode === "voice" ? "語音" : "打字"}</Badge>
-          </div>
+          <p className="mt-1 text-sm text-muted">
+            {formatDate(session.createdAt)}・{configLabel}・{config.lang === "en" ? "English" : "中文"}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={again}>
-            <Repeat aria-hidden />
-            再練一次
-          </Button>
-        </div>
+        <Button onClick={again} className="shrink-0">
+          <Repeat aria-hidden />
+          再練一次
+        </Button>
       </header>
 
-      {/* 總分 */}
+      {/* 總分＋五項能力 */}
       <Card className="mt-6">
-        <CardContent className="grid items-center gap-6 md:grid-cols-[auto_1fr]">
-          <div className="flex flex-col items-center gap-2">
+        <CardContent className="grid items-center gap-4 sm:grid-cols-2">
+          <div className="flex flex-col items-center text-center">
             <ScoreRing value={report.total} />
             {delta !== null && (
-              <span className={cn("inline-flex items-center gap-1 text-sm font-bold", delta >= 0 ? "text-good" : "text-warn")}>
+              <span className={cn("mt-2 inline-flex items-center gap-1 text-sm font-bold", delta >= 0 ? "text-good" : "text-warn")}>
                 {delta >= 0 ? <ArrowUpRight className="size-4" aria-hidden /> : <ArrowDownRight className="size-4" aria-hidden />}
-                比上次 {delta >= 0 ? `+${delta}` : delta} 分
+                比上次 {delta >= 0 ? `+${delta}` : delta}
               </span>
             )}
+            <p className="mt-3 font-display text-lg font-semibold text-ink">{report.headline}</p>
+            <p className="mt-1 text-xs text-muted">
+              口頭禪 {report.totalFillers} 次{report.avgPace !== null ? `・平均語速 ${report.avgPace} ${config.lang === "en" ? "wpm" : "字/分"}` : ""}
+            </p>
           </div>
-          <div>
-            <p className="font-display text-xl font-semibold text-ink">{report.headline}</p>
-            {report.strengths.length > 0 && (
-              <ul className="mt-3 space-y-1.5">
-                {report.strengths.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-ink-2">
-                    <Check className="mt-1 size-4 shrink-0 text-good" aria-hidden />
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[
-                ["回答", `${report.answers.filter((a) => !a.skipped).length} 題`],
-                ["紅旗", `${report.redFlags.length} 個`],
-                ["口頭禪", `${report.totalFillers} 次`],
-                ["平均語速", report.avgPace !== null ? `${report.avgPace} ${config.lang === "en" ? "wpm" : "字/分"}` : "打字不計"],
-              ].map(([k, v]) => (
-                <div key={k} className="rounded-xl bg-canvas px-3 py-2">
-                  <dt className="text-xs font-bold text-muted">{k}</dt>
-                  <dd className="font-bold text-ink">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 雷達圖 */}
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>五項能力</CardTitle>
-          <CardDescription>依台灣企業 HR 常用的評估面向計分。{previous ? "虛線是上一次練習。" : ""}</CardDescription>
-        </CardHeader>
-        <CardContent className="grid items-center gap-6 md:grid-cols-2">
-          <RadarChart dims={report.dims} previous={previous?.report.dims} />
-          <table className="w-full text-sm">
-            <caption className="sr-only">五項能力分數</caption>
-            <tbody>
-              {DIM_ORDER.map((d) => (
-                <tr key={d} className="border-b border-line-soft last:border-0">
-                  <th scope="row" className="py-2.5 pr-3 text-left align-top font-normal">
-                    <span className="block font-bold text-ink">{DIM_LABELS[d].label}</span>
-                    <span className="block text-xs text-muted">{DIM_LABELS[d].desc}</span>
-                  </th>
-                  <td className="w-28 py-2.5 align-top">
-                    <div className="flex items-center gap-2">
-                      <Progress value={report.dims[d]} className="h-1.5" aria-label={`${DIM_LABELS[d].label} ${report.dims[d]} 分`} />
-                      <span className="w-7 text-right font-bold tabular-nums">{report.dims[d]}</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <RadarChart dims={report.dims} previous={previous?.report.dims} size={280} />
         </CardContent>
       </Card>
 
       {/* 紅旗 */}
-      <section className="mt-8" aria-labelledby="flags-title">
-        <h2 id="flags-title" className="flex items-center gap-2 text-xl font-bold">
-          <Flag className="size-5 text-bad" aria-hidden />
-          台灣 HR 眼中的紅旗
-        </h2>
-        {report.redFlags.length > 0 && (
-          <p className="mt-1 text-sm text-muted">紅旗不代表你不好，而是台灣 HR 很常誤解的說法。多半改一句話就能修好。</p>
-        )}
-        {report.redFlags.length === 0 ? (
-          <p className="mt-3 rounded-2xl bg-good-tint px-4 py-4 text-ink-2">
-            這次沒有踩到常見紅旗：薪資答太早、批評前公司、反問說沒有、缺點太假、空窗期沒說收穫…都沒有出現。
-          </p>
-        ) : (
-          <ul className="mt-3 grid gap-3 md:grid-cols-2">
+      {report.redFlags.length > 0 && (
+        <section className="mt-8" aria-labelledby="flags-title">
+          <h2 id="flags-title" className="flex items-center gap-2 text-lg font-bold">
+            <Flag className="size-5 text-bad" aria-hidden />
+            台灣 HR 眼中的紅旗
+          </h2>
+          <ul className="mt-3 space-y-2">
             {report.redFlags.map((f) => (
-              <li key={f.id} className="rounded-2xl border border-bad/20 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-                <p className="flex items-center gap-1.5 font-bold text-bad">🚩 {f.title}</p>
-                <p className="mt-1 text-xs text-muted">出現在：{f.questionText}</p>
-                {f.quote && <p className="mt-2 rounded-lg bg-bad-tint px-3 py-2 text-sm text-ink">你說：「{f.quote}」</p>}
-                <p className="mt-2 text-sm text-ink-2"><b className="text-ink">為什麼扣分：</b>{f.why}</p>
-                <p className="mt-1 text-sm text-ink-2"><b className="text-ink">怎麼改：</b>{f.fix}</p>
+              <li key={f.id} className="rounded-xl border border-bad/20 bg-white px-4 py-3">
+                <p className="font-bold text-bad">🚩 {f.title}</p>
+                {f.quote && <p className="mt-1 text-sm text-muted">你說：「{f.quote}」</p>}
+                <p className="mt-1.5 text-sm text-ink"><b>改：</b>{f.fix}</p>
+                <details className="mt-1 text-sm text-ink-2">
+                  <summary className="cursor-pointer text-xs font-bold text-muted">為什麼扣分</summary>
+                  <p className="mt-1">{f.why}</p>
+                </details>
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* 逐題回饋 */}
       <section className="mt-8" aria-labelledby="answers-title">
-        <h2 id="answers-title" className="text-xl font-bold">逐題回饋</h2>
-        <p className="mt-1 text-sm text-muted">點開每一題，看逐字稿、HR 內心 OS、具體改法和改寫範例。黃色標示的是口頭禪。</p>
-        <ul className="mt-3 space-y-3">
+        <h2 id="answers-title" className="text-lg font-bold">逐題回饋</h2>
+        <ul className="mt-3 space-y-2">
           {report.answers.map((a, i) => (
             <AnswerItem key={`${a.questionId}-${i}`} a={a} index={labels[i]} onRetry={retryOne} defaultOpen={i === (firstWeak === -1 ? 0 : firstWeak)} />
           ))}
@@ -332,19 +268,18 @@ export function ReportView({ session, previous }: { session: Session; previous: 
 
       {/* 練習計畫 */}
       <section className="mt-8" aria-labelledby="plan-title">
-        <h2 id="plan-title" className="text-xl font-bold">接下來的練習計畫</h2>
-        <ol className="mt-3 grid gap-3 md:grid-cols-2">
-          {report.plan.map((p, i) => (
-            <li key={i} className="flex flex-col rounded-2xl border border-line-soft bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-              <span className="text-xs font-bold text-brand">{p.day}</span>
-              <span className="mt-1 font-bold text-ink">{p.title}</span>
-              <span className="mt-1 flex-1 text-sm text-ink-2">{p.detail}</span>
+        <h2 id="plan-title" className="text-lg font-bold">下一步</h2>
+        <ol className="mt-3 divide-y divide-line-soft rounded-2xl border border-line-soft bg-white">
+          {planItems.map((p, i) => (
+            <li key={i} className="flex items-center gap-3 px-4 py-3">
+              <span className="w-12 shrink-0 text-xs font-bold text-brand">{p.day}</span>
+              <span className="min-w-0 flex-1 text-sm font-bold text-ink">{p.title}</span>
               {p.href === "/setup/?again=1" ? (
-                <Button variant="soft" size="sm" className="mt-3 self-start" onClick={again}>
+                <Button variant="soft" size="sm" onClick={again}>
                   {p.cta}
                 </Button>
               ) : (
-                <Button asChild variant="soft" size="sm" className="mt-3 self-start">
+                <Button asChild variant="soft" size="sm">
                   <Link href={p.href}>{p.cta}</Link>
                 </Button>
               )}
@@ -352,19 +287,6 @@ export function ReportView({ session, previous }: { session: Session; previous: 
           ))}
         </ol>
       </section>
-
-      <div className="mt-10 flex flex-col items-center gap-3 rounded-2xl bg-white p-6 text-center shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-        <p className="font-bold text-ink">每練一次，報告都會跟上一次比較。</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button onClick={again}>
-            <Repeat aria-hidden />
-            用同樣設定再練
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/progress/">看我的進度</Link>
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

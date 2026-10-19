@@ -57,9 +57,7 @@ export function AutobiographyChecker() {
       <div aria-live="polite">
         {!hasText ? (
           <div className="rounded-2xl bg-canvas p-5 text-sm text-ink-2">
-            <p className="font-bold text-ink">企業怎麼看自傳？</p>
-            <p className="mt-2">yes123 在 2026 年 7 月調查 1,110 家企業：新鮮人自傳平均只拿到 <b>48.1 分</b>，HR 平均花 <b>116 秒</b>看一份。</p>
-            <p className="mt-2">這個健檢依照企業最常抱怨的問題，逐項檢查你的自傳。</p>
+            <p>企業給新鮮人自傳的平均分數是 <b className="text-ink">48.1</b> 分，平均只花 <b className="text-ink">116 秒</b>看一份（yes123，2026）。</p>
           </div>
         ) : (
           <div className="rounded-2xl border border-line-soft bg-white p-5">

@@ -13,7 +13,7 @@ const SUBSIDIES = [
   {
     name: "支援青年就業計畫",
     amount: "最高 NT$48,000",
-    who: "15–29 歲、非在學、失業 60 天以上、第一次找工作（之前沒保過勞保）",
+    who: "15–29 歲、第一次找工作、失業 60 天以上",
     what: "求職交通補助每月 6,000 元（最多 3 次）＋就業獎勵最高 30,000 元（同一雇主做滿 90 天、180 天）",
     url: "https://job.taiwanjobs.gov.tw/Internet/special2/woman/docDetail.aspx?docid=42056",
     tag: "應屆畢業",
@@ -21,7 +21,7 @@ const SUBSIDIES = [
   {
     name: "青年職得好評計畫",
     amount: "NT$30,000",
-    who: "15–29 歲、非在學、失業 180 天以上",
+    who: "15–29 歲、失業 180 天以上",
     what: "就業獎勵。2026 年起，投保薪資低於門檻的兼職期間也可能算失業期間。不能和上一個計畫同時領。",
     url: "https://www.wda.gov.tw/cp.aspx?n=A25A31DE8D66F1C6&s=E1FC2428B7062918",
     tag: "待業半年以上",
@@ -29,7 +29,7 @@ const SUBSIDIES = [
   {
     name: "青年跨域就業促進補助",
     amount: "最高 NT$92,000",
-    who: "18–29 歲、非在學、沒保過勞保、工作地點離家 30 公里以上",
+    who: "18–29 歲、到離家 30 公里以上的地方工作",
     what: "求職交通、異地通勤、搬遷（最高 30,000 元）、租屋（每月最高 5,000 元，12 個月）",
     url: "https://www.wda.gov.tw/cp.aspx?n=A25A31DE8D66F1C6&s=7169BDFE5385FB1E",
     tag: "北漂／外地工作",
@@ -37,7 +37,7 @@ const SUBSIDIES = [
   {
     name: "產業新尖兵計畫",
     amount: "訓練費最高 NT$100,000",
-    who: "15–29 歲、待業或想轉職",
+    who: "15–29 歲、待業或想轉職，補助職訓學費",
     what: "補助職訓課程學費，參訓期間每月學習獎勵 8,000 元（最多 12 個月）。很適合轉職者。",
     url: "https://elite.taiwanjobs.gov.tw/",
     tag: "轉職",
@@ -45,7 +45,7 @@ const SUBSIDIES = [
   {
     name: "大專青年預聘計畫",
     amount: "NT$10,000",
-    who: "畢業前一年的大專學生（不含研究所），參加合作企業的實習或訓練",
+    who: "大專應屆生，畢業後留任合作企業",
     what: "畢業後留任合作企業做滿 30 天，可領一次性獎勵。",
     url: "https://ttms.etraining.gov.tw/eYVTR/ePlaninfo/Index9?type=10",
     tag: "在學生",
@@ -67,8 +67,7 @@ export default function ResourcesPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <h1 className="text-2xl font-bold sm:text-3xl">求職資源</h1>
-      <p className="mt-2 text-ink-2">面試以外，你也需要這些：自傳、當天準備、薪資行情，還有政府真的會給的補助。</p>
-
+      
       <nav aria-label="本頁目錄" className="mt-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
         {[
           ["#autobiography", "自傳健檢"],
@@ -87,7 +86,7 @@ export default function ResourcesPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><FileText className="size-5 text-brand" aria-hidden />自傳健檢</CardTitle>
-            <CardDescription>88.2% 的新鮮人說自己不會寫自傳。貼上你的自傳，依照企業最常扣分的 8 個地方逐項檢查。</CardDescription>
+            <CardDescription>貼上自傳，檢查企業最常扣分的 8 個地方。</CardDescription>
           </CardHeader>
           <CardContent>
             <AutobiographyChecker />
@@ -100,7 +99,7 @@ export default function ResourcesPage() {
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><ClipboardCheck className="size-5 text-brand" aria-hidden />面試當天檢查表</CardTitle>
-              <CardDescription>整理自 104 職涯診所與 yes123 企業調查的常見地雷。</CardDescription>
+              
             </CardHeader>
             <CardContent>
               <ul className="space-y-2.5">
@@ -121,7 +120,7 @@ export default function ResourcesPage() {
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Coins className="size-5 text-brand" aria-hidden />新鮮人薪資行情</CardTitle>
-              <CardDescription>被問期望薪資前，先知道這三個數字。</CardDescription>
+              
             </CardHeader>
             <CardContent>
               <dl className="space-y-3">
@@ -136,9 +135,7 @@ export default function ResourcesPage() {
                   </div>
                 ))}
               </dl>
-              <p className="mt-3 text-sm text-ink-2">
-                面試時的安全說法：「依公司規定，我查過這個職務的行情大約在 ___ 到 ___ 之間。」具體職務可以查 104 薪資情報。
-              </p>
+              <p className="mt-3 text-sm text-ink-2">說法：「依公司規定，我查過的行情是 ___ 到 ___。」</p>
             </CardContent>
           </Card>
         </section>
@@ -146,8 +143,8 @@ export default function ResourcesPage() {
 
       <section id="subsidy" className="mt-8 scroll-mt-20">
         <h2 className="flex items-center gap-2 text-xl font-bold"><Gift className="size-5 text-brand" aria-hidden />青年就業補助</h2>
-        <p className="mt-1 text-ink-2">
-          很多人不知道自己符合資格。規定每年會調整，申請前請點連結確認，或撥勞動部免付費專線 <a href="tel:0800777888" className="font-bold text-ink underline">0800-777-888</a>。
+        <p className="mt-1 text-sm text-muted">
+          規定每年會調整，申請前請確認，或撥 <a href="tel:0800777888" className="font-bold text-ink underline">0800-777-888</a>。
         </p>
         <ul className="mt-4 grid gap-3 md:grid-cols-2">
           {SUBSIDIES.map((s) => (
@@ -159,8 +156,8 @@ export default function ResourcesPage() {
                     <Badge variant="outline">{s.tag}</Badge>
                   </div>
                   <p className="mt-1 font-display text-xl font-bold text-brand-strong">{s.amount}</p>
-                  <p className="mt-2 text-sm text-ink-2"><b className="text-ink">誰可以申請：</b>{s.who}</p>
-                  <p className="mt-1 flex-1 text-sm text-ink-2"><b className="text-ink">內容：</b>{s.what}</p>
+                  <p className="mt-2 text-sm text-ink-2">{s.who}</p>
+                  <span className="flex-1" />
                   <a href={s.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline">
                     官方說明 <ExternalLink className="size-3.5" aria-hidden />
                   </a>
@@ -169,18 +166,18 @@ export default function ResourcesPage() {
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-muted">整理自 Yourator〈2026 青年就業補助怎麼選？〉（2026/7/21）與勞動部勞動力發展署公告。</p>
+        <p className="mt-2 text-xs text-muted">來源：Yourator（2026/7/21）、勞動部勞動力發展署。</p>
       </section>
 
       <section id="explore" className="mt-8 scroll-mt-20">
         <h2 className="flex items-center gap-2 text-xl font-bold"><Compass className="size-5 text-brand" aria-hidden />還不確定方向？</h2>
-        <p className="mt-1 text-ink-2">52.2% 的新鮮人說自己求職時「沒有方向感」。這些免費工具可以幫你先找方向。</p>
+
         <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["UCAN 大專校院就業職能平台", "教育部的職業興趣探索與職能診斷，很多學校的職涯中心都用它。", "https://ucan.moe.edu.tw/"],
-            ["台灣就業通", "勞動部的職缺、職訓課程和各縣市就業服務站。", "https://www.taiwanjobs.gov.tw/"],
-            ["投資青年就業方案", "青年職涯諮詢、就業補助與職場體驗的入口。", "https://youth.taiwanjobs.gov.tw/"],
-            ["104 履歷診療室", "業界志工顧問免費幫你看履歷，Dcard 上有人說「真的有效」。", "https://blog.104.com.tw/resume-clinic-volunteer-consultants-schedule-continuously-updated"],
+            ["UCAN 大專校院就業職能平台", "教育部的職業興趣與職能診斷", "https://ucan.moe.edu.tw/"],
+            ["台灣就業通", "勞動部職缺與職訓課程", "https://www.taiwanjobs.gov.tw/"],
+            ["投資青年就業方案", "青年職涯諮詢與補助入口", "https://youth.taiwanjobs.gov.tw/"],
+            ["104 履歷診療室", "業界顧問免費看履歷", "https://blog.104.com.tw/resume-clinic-volunteer-consultants-schedule-continuously-updated"],
           ].map(([t, d, u]) => (
             <li key={t}>
               <a href={u} target="_blank" rel="noopener noreferrer" className="block h-full rounded-2xl border border-line-soft bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:border-brand-line">

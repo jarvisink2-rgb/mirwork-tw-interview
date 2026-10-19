@@ -75,6 +75,8 @@ export function InterviewRoom() {
   const camStreamRef = useRef<MediaStream | null>(null);
   const [camStream, setCamStream] = useState<MediaStream | null>(null);
   const cancelledRef = useRef(false);
+  const micBtnRef = useRef<HTMLButtonElement>(null);
+  const typedRef = useRef<HTMLTextAreaElement>(null);
 
   const lang = config?.lang ?? "zh";
   const sr = useSpeechRecognition(lang);
@@ -104,6 +106,13 @@ export function InterviewRoom() {
       stopSpeaking();
     };
   }, [load]);
+
+  /* ── 輪到使用者回答時，把焦點移到主要操作（鍵盤與讀屏使用者） ── */
+  useEffect(() => {
+    if (phase !== "answering") return;
+    const t = setTimeout(() => (mode === "text" ? typedRef.current : micBtnRef.current)?.focus({ preventScroll: true }), 50);
+    return () => clearTimeout(t);
+  }, [phase, mode, current?.id]);
 
   /* ── 計時 ── */
   useEffect(() => {
@@ -194,10 +203,10 @@ export function InterviewRoom() {
       await say(prefix ? `${prefix}${q.text}` : q.text);
       if (cancelledRef.current) return;
       shownAtRef.current = Date.now();
-      setAvatar("listening");
+      setAvatar(mode === "text" ? "listening" : "idle");
       setPhase("answering");
     },
-    [config?.difficulty, say, sr],
+    [config?.difficulty, mode, say, sr],
   );
 
   /* ── 結束並產生報告 ── */
@@ -289,6 +298,7 @@ export function InterviewRoom() {
     recStartRef.current = Date.now();
     setEditing(false);
     setSub("recording");
+    setAvatar("listening");
   };
 
   const stopRecording = () => {
@@ -296,6 +306,7 @@ export function InterviewRoom() {
     if (recStartRef.current) recAccRef.current += Date.now() - recStartRef.current;
     recStartRef.current = null;
     setSub("review");
+    setAvatar("idle");
   };
 
   const reRecord = () => {
@@ -386,7 +397,6 @@ export function InterviewRoom() {
                 <div key={i} className="h-12 animate-pulse rounded-xl bg-canvas" />
               ))}
             </div>
-            <div className="mt-5 h-[104px] w-full animate-pulse rounded-xl bg-brand-tint" />
             <Button size="xl" className="mt-6 w-full" disabled>
               <Loader2 className="animate-spin" aria-hidden />
               準備中
@@ -449,7 +459,7 @@ export function InterviewRoom() {
             <h1 className="mt-4 text-2xl font-bold">{config.singleQuestionId ? "單題練習" : config.quick ? "3 分鐘暖身" : "準備好了嗎？"}</h1>
             <p className="mt-2 text-ink-2">
               {config.quick
-                ? "三題最常見的問題，不追問、不計時壓力。"
+                ? "三題常見問題，不追問。"
                 : config.singleQuestionId
                   ? questions[0]?.text
                   : `${config.companyName || companyLabel(config.companyType)}・${roleLabel(config.role)}・${difficultyLabel(config.difficulty)}・${questions.length} 題`}
@@ -462,7 +472,7 @@ export function InterviewRoom() {
                     {mode === "voice" ? <Mic className="size-5 text-brand" aria-hidden /> : <Keyboard className="size-5 text-brand" aria-hidden />}
                     {mode === "voice" ? "用說的回答" : "用打字回答"}
                   </span>
-                  {mode === "voice" && <span className="pl-7 text-xs text-muted">語音轉文字由瀏覽器處理，MirWork 不保存錄音</span>}
+                  {mode === "voice" && <span className="pl-7 text-xs text-muted">MirWork 不保存錄音</span>}
                 </span>
                 <button type="button" onClick={() => setMode(mode === "voice" ? "text" : "voice")} className="cursor-pointer text-sm font-bold text-brand underline-offset-4 hover:underline">
                   改成{mode === "voice" ? "打字" : "語音"}
@@ -479,9 +489,9 @@ export function InterviewRoom() {
                 <span className="flex flex-col">
                   <span className="flex items-center gap-2 font-bold">
                     <Camera className="size-5 text-brand" aria-hidden />
-                    開啟鏡頭看自己的表情
+                    看自己的表情
                   </span>
-                  <span className="pl-7 text-xs text-muted">只在你的螢幕上顯示，不錄影、不上傳</span>
+                  <span className="pl-7 text-xs text-muted">只在本機顯示，不錄影</span>
                 </span>
                 <Switch checked={camOn} onCheckedChange={setCamOn} aria-label="開啟鏡頭" />
               </label>
@@ -493,11 +503,7 @@ export function InterviewRoom() {
               )}
             </div>
 
-            <div className="mt-5 w-full rounded-xl border border-brand-line bg-brand-tint px-4 py-3 text-left text-sm text-ink-2">
-              <p className="font-bold text-brand-strong">緊張很正常</p>
-              <p className="mt-0.5">開始前先深呼吸三次：吸氣 4 秒、停 4 秒、吐氣 6 秒。這裡答錯不會有人知道，可以隨時暫停或結束。</p>
-            </div>
-
+            <p className="mt-4 text-sm text-muted">緊張很正常，隨時可以暫停或結束。</p>
             <Button size="xl" className="mt-6 w-full" onClick={begin}>
               開始面試
             </Button>
@@ -685,6 +691,7 @@ export function InterviewRoom() {
                 </div>
                 <textarea
                   id="typed-answer"
+                  ref={typedRef}
                   value={typed}
                   onChange={(e) => setTyped(e.target.value)}
                   rows={6}
@@ -746,6 +753,7 @@ export function InterviewRoom() {
                   略過
                 </Button>
                 <button
+                  ref={micBtnRef}
                   type="button"
                   onClick={startRecording}
                   disabled={phase !== "answering"}
