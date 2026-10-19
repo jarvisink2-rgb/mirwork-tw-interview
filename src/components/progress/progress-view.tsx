@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChartLine, ChevronRight, Flame, Trash2 } from "lucide-react";
+import { ChartLine, ChevronRight, Target, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { TrendChart } from "@/components/charts/trend-chart";
 import { QuickStartButton } from "@/components/quick-start-button";
 import type { Dim, Session } from "@/lib/types";
-import { DIM_LABELS, DIM_ORDER, companyLabel, roleLabel } from "@/lib/data/options";
+import { DIM_LABELS, DIM_ORDER, interviewTitle } from "@/lib/data/options";
 import { deleteSessions, listSessions } from "@/lib/storage";
 import { formatDate } from "@/lib/utils";
 import { useLang } from "@/lib/i18n";
@@ -45,18 +45,18 @@ export function ProgressView() {
       date: s.createdAt,
       total: s.report.total,
       dims: s.report.dims,
-      title: s.config.quick ? (lang === "en" ? "3-minute warm-up" : "3 分鐘暖身") : s.config.singleQuestionId ? `${s.answers[0]?.questionText.slice(0, 24) ?? ""}…` : `${s.config.companyName || companyLabel(s.config.companyType, lang)} · ${roleLabel(s.config.role, lang)}`,
+      title: s.config.singleQuestionId && s.answers[0] ? `${s.answers[0].questionText.slice(0, 24)}…` : interviewTitle(s.config, lang),
       flags: s.report.redFlags.length,
     }));
   }, [sessions, lang]);
 
   if (sessions === null) {
-    return <div className="mt-6 min-h-[70vh] animate-pulse rounded-2xl bg-white" role="status" aria-label="Loading" />;
+    return <div className="mt-6 min-h-[22rem] animate-pulse rounded-2xl bg-white" role="status" aria-label="Loading" />;
   }
 
   if (!rows.length) {
     return (
-      <Card className="mt-6 flex min-h-[70vh] items-center justify-center">
+      <Card className="mt-6 flex min-h-[22rem] items-center justify-center">
         <CardContent className="flex flex-col items-center py-12 text-center">
           <ChartLine className="size-8 text-brand" aria-hidden />
           <h2 className="mt-3 text-lg font-bold">{tr("還沒有練習紀錄", "No practice yet")}</h2>
@@ -76,20 +76,18 @@ export function ProgressView() {
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <dl className="grid grid-cols-3 divide-x divide-line-soft rounded-2xl border border-line-soft bg-white">
         {[
           [tr("最新分數", "Latest score"), `${latest.total}`],
           [tr("進步", "Change"), rows.length > 1 ? `${latest.total - first.total >= 0 ? "+" : ""}${latest.total - first.total}` : "—"],
           [tr("練習", "Sessions"), `${rows.length}`],
         ].map(([k, v]) => (
-          <Card key={k}>
-            <CardContent className="p-4 sm:p-4">
-              <p className="text-xs font-bold text-muted">{k}</p>
-              <p className="mt-0.5 font-display text-2xl font-bold text-ink">{v}</p>
-            </CardContent>
-          </Card>
+          <div key={k} className="px-4 py-4 sm:px-5">
+            <dt className="text-xs font-bold text-muted">{k}</dt>
+            <dd className="mt-1 font-brand text-[28px] font-semibold leading-none tabular-nums text-ink">{v}</dd>
+          </div>
         ))}
-      </div>
+      </dl>
 
       <Card>
         <CardHeader>
@@ -117,7 +115,7 @@ export function ProgressView() {
             </div>
           ))}
           <p className="flex items-start gap-1.5 pt-2 text-sm text-ink-2">
-            <Flame className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
+            <Target className="mt-0.5 size-4 shrink-0 text-warn" aria-hidden />
             <span>
               {tr("下次專心練：", "Focus next on: ")}<b className="text-ink">{lang === "en" ? DIM_LABELS[weakest].en : DIM_LABELS[weakest].short}</b>{" "}({lang === "en" ? DIM_LABELS[weakest].descEn : DIM_LABELS[weakest].desc})
             </span>
@@ -139,7 +137,10 @@ export function ProgressView() {
                 <>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold text-ink">{r.title}</span>
-                    <span className="block text-xs text-muted">{formatDate(r.date, lang)}{r.flags ? tr(`・${r.flags} 個紅旗`, ` · ${r.flags} red flags`) : ""}</span>
+                    <span className="flex gap-3 text-xs text-muted">
+                      <time dateTime={r.date}>{formatDate(r.date, lang)}</time>
+                      {r.flags > 0 && <span className="text-bad">{tr(`${r.flags} 個紅旗`, `${r.flags} red flag${r.flags > 1 ? "s" : ""}`)}</span>}
+                    </span>
                   </span>
                   <Badge variant={r.total >= 80 ? "good" : r.total >= 60 ? "default" : "warn"}>{r.total}</Badge>
                   {r.id && <ChevronRight className="size-4 text-muted" aria-hidden />}

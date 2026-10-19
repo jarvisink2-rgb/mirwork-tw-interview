@@ -63,6 +63,14 @@ function countOccurrences(haystack: string, needle: string, en: boolean) {
   return count;
 }
 
+/** Chinese keywords match as substrings; English ones only as whole words (plural allowed). */
+function hasKeyword(lower: string, keyword: string) {
+  const k = keyword.toLowerCase();
+  if (!/^[a-z0-9 .+#/-]+$/.test(k)) return lower.includes(k);
+  const esc = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${esc}(s|es)?(?![a-z0-9])`).test(lower);
+}
+
 export function measureLength(text: string, en: boolean) {
   if (en) return (text.trim().match(/[A-Za-z0-9'’-]+/g) || []).length;
   const cjk = (text.match(/[㐀-鿿]/g) || []).length;
@@ -247,11 +255,15 @@ const FLAGS: FlagDef[] = [
   },
 ];
 
-function detectFlags(text: string, q: Question, len: number): { def: FlagDef; quote?: string }[] {
-  const out: { def: FlagDef; quote?: string }[] = [];
+function detectFlags(text: string, q: Question, len: number): { def: FlagDef; quote?: string; marks: string[] }[] {
+  const out: { def: FlagDef; quote?: string; marks: string[] }[] = [];
   for (const def of FLAGS) {
     const re = def.test(text, q, len);
-    if (re) out.push({ def, quote: snippetAround(text, new RegExp(re.source, re.flags.replace("g", ""))) });
+    if (!re) continue;
+    // 逐字稿上要畫線的確切字詞（同一個紅旗可能出現好幾次）
+    const all = new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`);
+    const marks = Array.from(new Set(Array.from(text.matchAll(all), (m) => m[0].trim()).filter(Boolean)));
+    out.push({ def, quote: snippetAround(text, new RegExp(re.source, re.flags.replace("g", ""))), marks });
   }
   return out;
 }
@@ -326,8 +338,8 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
   const numbers = Array.from(new Set((text.match(NUMBER_RE) || []).map((n) => n.trim()).filter((n) => n.length > 0 && !/^[一兩]$/.test(n) && !TRIVIAL_NUMBER.test(n) && !/^\d$/.test(n)))).slice(0, 5);
 
   // ── 關鍵字 ──
-  const roleHits = ROLE_KEYWORDS[config.role].filter((k) => lower.includes(k.toLowerCase()));
-  const cultureHits = CULTURE_KEYWORDS[config.companyType].filter((k) => lower.includes(k.toLowerCase()));
+  const roleHits = ROLE_KEYWORDS[config.role].filter((k) => hasKeyword(lower, k));
+  const cultureHits = CULTURE_KEYWORDS[config.companyType].filter((k) => hasKeyword(lower, k));
   const researched = RESEARCH_SIGNALS.test(text);
   const hedgeList = en ? HEDGES_EN : HEDGES_ZH;
   const hedges = hedgeList.reduce((s, h) => s + countOccurrences(en ? lower : text, h, en), 0);
@@ -453,6 +465,7 @@ export function analyzeAnswer(rec: AnswerRecord, config: InterviewConfig, voice:
     improve: improve.slice(0, 4),
     modelAnswer: pickModelAnswer(q, config),
     redFlagIds: flags.map((f) => f.id),
+    flagMarks: Array.from(new Set(flagHits.flatMap((f) => f.marks))),
     flags,
   };
 }

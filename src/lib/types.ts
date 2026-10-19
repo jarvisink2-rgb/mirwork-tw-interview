@@ -103,6 +103,8 @@ export interface AnswerFeedback {
   improve: string[];
   modelAnswer: string;
   redFlagIds: string[];
+  /** 觸發紅旗的確切字詞，用來在逐字稿上畫線（舊紀錄沒有這個欄位） */
+  flagMarks?: string[];
 }
 
 export interface PlanItem {

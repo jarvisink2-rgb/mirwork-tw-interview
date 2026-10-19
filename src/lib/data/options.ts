@@ -72,3 +72,23 @@ export function difficultyLabel(id: Difficulty, lang: L = "zh") {
 export function dimLabel(d: Dim, lang: L = "zh", short = false) {
   return lang === "en" ? DIM_LABELS[d].en : short ? DIM_LABELS[d].short : DIM_LABELS[d].label;
 }
+
+/**
+ * A readable title for a practice session, written as a phrase instead of "A・B・C".
+ * zh「示範科技的軟體工程師面試（標準）」 / en "Software engineer interview at Example Co. (standard)"
+ */
+export function interviewTitle(
+  c: { companyType: CompanyType; role: RoleId; difficulty: Difficulty; companyName?: string; quick?: boolean; singleQuestionId?: string },
+  lang: L = "zh",
+  withDifficulty = false,
+) {
+  if (c.quick) return lang === "en" ? "3-minute warm-up" : "3 分鐘暖身";
+  if (c.singleQuestionId) return lang === "en" ? "Single question" : "單題練習";
+  const name = c.companyName?.trim();
+  const diff = difficultyLabel(c.difficulty, lang);
+  if (lang === "en") {
+    const where = name ? ` at ${name}` : ` (${companyLabel(c.companyType, "en")})`;
+    return `${roleLabel(c.role, "en")} interview${where}${withDifficulty ? `, ${diff.toLowerCase()}` : ""}`;
+  }
+  return `${name || companyLabel(c.companyType)}的${roleLabel(c.role)}面試${withDifficulty ? `（${diff}）` : ""}`;
+}

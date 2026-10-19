@@ -16,7 +16,7 @@ import { getProvider } from "@/lib/ai/provider";
 import type { AnswerRecord, InterviewConfig, PlannedQuestion, QuestionCategory } from "@/lib/types";
 import { getLastConfig, saveSession, takePendingConfig } from "@/lib/storage";
 import { questionMeta } from "@/lib/analysis/analyze";
-import { companyLabel, difficultyLabel, roleLabel } from "@/lib/data/options";
+import { interviewTitle } from "@/lib/data/options";
 import { inAppBrowser, speak, srSupported, stopSpeaking, ttsSupported, useSpeechRecognition } from "@/lib/speech";
 import { cn, formatClock, uid } from "@/lib/utils";
 import { T, getLang } from "@/lib/i18n";
@@ -443,7 +443,7 @@ export function InterviewRoom() {
         </div>
         <ul className="w-full space-y-2 text-left text-sm">
           {(lang === "en" ? ["Measuring pace and filler words", "Checking STAR structure and numbers", "Checking for red flags", "Writing examples and your plan"] : ["計算語速與口頭禪", "檢查 STAR 結構和具體數字", "對照台灣 HR 的紅旗清單", "產生改寫範例與練習計畫"]).map((s, i) => (
-            <li key={s} className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 shadow-sm" style={{ animation: `fadeIn .4s ${i * 0.25}s both` }}>
+            <li key={s} className="flex items-center gap-2 rounded-xl border border-line-soft bg-white px-4 py-2.5" style={{ animation: `fadeIn .4s ${i * 0.25}s both` }}>
               <Loader2 className="size-4 animate-spin text-brand" aria-hidden />
               {s}
             </li>
@@ -469,7 +469,7 @@ export function InterviewRoom() {
                 ? tr("三題常見問題，不追問。", "Three common questions, no follow-ups.")
                 : config.singleQuestionId
                   ? questions[0]?.text
-                  : `${config.companyName || companyLabel(config.companyType, lang)} · ${roleLabel(config.role, lang)} · ${difficultyLabel(config.difficulty, lang)} · ${questions.length} ${tr("題", "questions")}`}
+                  : `${interviewTitle(config, lang, true)}${tr(`，共 ${questions.length} 題`, `, ${questions.length} questions`)}`}
             </p>
 
             <div className="mt-5 w-full space-y-3 text-left">
@@ -535,7 +535,7 @@ export function InterviewRoom() {
   const allowHint = config.difficulty !== "pressure";
 
   return (
-    <div className="min-h-[calc(100dvh-3.5rem)] bg-gradient-to-b from-brand-tint via-canvas to-canvas">
+    <div className="min-h-[calc(100dvh-3.5rem)] bg-canvas">
       {/* 面試狀態列 */}
       <div className="sticky top-14 z-30 border-b border-line-soft bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-2.5 sm:px-6">
@@ -543,7 +543,7 @@ export function InterviewRoom() {
             <div className="flex items-center justify-between text-xs font-bold text-ink-2">
               <span>
                 {tr(`第 ${Math.min(qIndex + 1, questions.length)} / ${questions.length} 題`, `Question ${Math.min(qIndex + 1, questions.length)} of ${questions.length}`)}
-                {current?.isFollowUp ? tr("・追問", " · follow-up") : ""}
+                {current?.isFollowUp ? <span className="text-warn">{tr("（追問）", " (follow-up)")}</span> : null}
               </span>
               <span className="tabular-nums" aria-label={tr(`已進行 ${formatClock(totalElapsed)}`, `Elapsed ${formatClock(totalElapsed)}`)}>
                 {formatClock(totalElapsed)}
@@ -597,7 +597,7 @@ export function InterviewRoom() {
           <MirAvatar state={avatar} size={72} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-muted">{tr("面試官 Mir", "Mir, your interviewer")}</p>
-            <div className="mt-1 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-[15px] leading-relaxed text-ink-2 shadow-sm" aria-live="polite">
+            <div className="mt-1 rounded-2xl rounded-tl-sm border border-line-soft bg-white px-4 py-3 text-[15px] leading-relaxed text-ink-2" aria-live="polite">
               {phase === "thinking" ? (
                 <span className="text-muted">{tr("（Mir 正在想…）", "(Mir is thinking…)")}</span>
               ) : current && mirLine.includes(current.text) ? (
@@ -609,7 +609,7 @@ export function InterviewRoom() {
             </div>
             {avatar === "speaking" && (
               <button type="button" onClick={stopSpeaking} className="mt-1.5 cursor-pointer text-xs font-bold text-brand hover:underline">
-                {tr("略過朗讀 ›", "Skip ›")}
+                {tr("略過朗讀", "Skip reading")}
               </button>
             )}
           </div>
@@ -617,7 +617,7 @@ export function InterviewRoom() {
 
         {/* 題目 */}
         {current && (
-          <Card className="mt-5">
+          <Card className="mt-5 shadow-[0_24px_48px_-28px_rgba(16,24,40,0.30),0_6px_14px_-10px_rgba(16,24,40,0.10)]">
             <CardContent>
               <div className="flex flex-wrap items-center gap-2">
                 {current.isFollowUp ? <Badge variant="warn">{tr("追問", "Follow-up")}</Badge> : <Badge>{tr(`第 ${qIndex + 1} 題`, `Question ${qIndex + 1}`)}</Badge>}
@@ -628,7 +628,7 @@ export function InterviewRoom() {
                 </span>
               </div>
               {current.isFollowUp && current.parentText && <p className="mt-3 text-sm text-muted">{tr(`延續：「${current.parentText}」`, `Following up on: "${current.parentText}"`)}</p>}
-              <h1 className="mt-3 font-display text-xl font-semibold leading-snug text-ink sm:text-2xl">{current.text}</h1>
+              <h1 className="mt-3 text-[22px] leading-snug text-ink sm:text-[26px]">{current.text}</h1>
               {allowHint && meta && (
                 <div className="mt-3">
                   <button
@@ -663,7 +663,7 @@ export function InterviewRoom() {
         {phase === "answering" && (
           <div className="mt-5">
             {mode === "voice" ? (
-              <div className="rounded-2xl border border-line-soft bg-white p-4 shadow-sm">
+              <div className="rounded-2xl border border-line-soft bg-white p-4">
                 <div className="flex items-center justify-between">
                   <span className={cn("flex items-center gap-2 text-sm font-bold", sub === "recording" ? "text-bad" : "text-muted")}>
                     {sub === "recording" && <span className="size-2.5 animate-pulse rounded-full bg-bad" aria-hidden />}
@@ -671,7 +671,7 @@ export function InterviewRoom() {
                   </span>
                   <span className={cn("text-sm font-bold tabular-nums", answerSec > maxSec ? "text-warn" : "text-ink-2")}>{formatClock(answerSec)}</span>
                 </div>
-                <Waveform stream={micStream} active={sub === "recording"} className="mt-3 h-12 w-full" />
+                {sub !== "review" && <Waveform stream={micStream} active={sub === "recording"} className="mt-3 h-12 w-full" />}
                 {answerSec > maxSec && sub === "recording" && <p className="mt-2 text-sm font-bold text-warn">{tr("已超過建議時間，可以準備收尾了。", "You're over the suggested time. Start wrapping up.")}</p>}
                 {sub === "review" && editing ? (
                   <>
@@ -700,7 +700,7 @@ export function InterviewRoom() {
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-line-soft bg-white p-4 shadow-sm">
+              <div className="rounded-2xl border border-line-soft bg-white p-4">
                 <div className="flex items-center justify-between">
                   <label htmlFor="typed-answer" className="text-sm font-bold text-ink-2">
                     {tr("輸入你的回答", "Your answer")}

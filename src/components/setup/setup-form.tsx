@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Check, FileUp, Keyboard, Loader2, Mic, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { COMPANY_TYPES, DIFFICULTIES, FOCUS_TOPICS, ROLES, SITUATIONS } from "@/lib/data/options";
+import { COMPANY_TYPES, DIFFICULTIES, FOCUS_TOPICS, ROLES, SITUATIONS, interviewTitle } from "@/lib/data/options";
 import type { AnswerMode, CompanyType, Difficulty, FocusTopic, InterviewConfig, RoleId, Situation } from "@/lib/types";
 import { getLastConfig, setLastConfig, setPendingConfig } from "@/lib/storage";
 import { extractKeywords, extractPdfText } from "@/lib/resume";
@@ -117,8 +117,6 @@ export function SetupForm() {
 
   const tailored = resumeQuestions(config.resumeKeywords, lang)[0];
   const minutes = { 3: 7, 5: 12, 7: 17 }[config.length];
-  const company = COMPANY_TYPES.find((c) => c.id === config.companyType)!;
-  const role = ROLES.find((r) => r.id === config.role)!;
   const difficulty = DIFFICULTIES.find((d) => d.id === config.difficulty)!;
   const focusOptions = FOCUS_TOPICS.filter((f) => !(en && ["english", "military", "salary", "gap", "overtime"].includes(f.id)));
 
@@ -169,7 +167,9 @@ export function SetupForm() {
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-bold text-ink sm:px-6 [&::-webkit-details-marker]:hidden">
           <T zh="更多設定" en="More options" />
           <span className="text-sm font-normal text-muted group-open:hidden">
-            {en ? difficulty.en : difficulty.label}・{config.length} {en ? "questions" : "題"}・{config.mode === "voice" ? (en ? "Voice" : "語音") : en ? "Typing" : "打字"}
+            {en
+              ? `${difficulty.en}, ${config.length} questions, ${config.mode === "voice" ? "voice" : "typing"}`
+              : `${difficulty.label}，${config.length} 題，${config.mode === "voice" ? "語音" : "打字"}`}
           </span>
         </summary>
         <div className="space-y-6 border-t border-line-soft px-5 py-5 sm:px-6">
@@ -277,11 +277,13 @@ export function SetupForm() {
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-line-soft bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:rounded-2xl sm:border sm:px-5 md:bottom-0">
         <div className="flex items-center justify-between gap-3">
-          <p className="min-w-0 truncate text-sm text-ink-2">
-            <b className="text-ink">
-              <T zh={`${company.short}・${role.label}`} en={`${company.en} · ${role.en}`} />
+          <p className="min-w-0 text-sm leading-snug">
+            <b className="block truncate text-ink">
+              <T zh={interviewTitle({ ...config, quick: false, singleQuestionId: undefined }, "zh")} en={interviewTitle({ ...config, quick: false, singleQuestionId: undefined }, "en")} />
             </b>
-            <T zh={`・約 ${minutes} 分鐘`} en={` · about ${minutes} min`} />
+            <span className="text-xs text-muted">
+              <T zh={`約 ${minutes} 分鐘`} en={`About ${minutes} min`} />
+            </span>
           </p>
           <Button type="submit" size="lg" className="shrink-0">
             {config.mode === "voice" ? <Mic aria-hidden /> : <Keyboard aria-hidden />}

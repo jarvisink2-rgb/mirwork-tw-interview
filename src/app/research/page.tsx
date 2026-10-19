@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { T } from "@/lib/i18n-shared";
 
 export const metadata: Metadata = {
@@ -467,12 +466,12 @@ const PROBLEMS_EN = [
 function ResearchEn() {
   return (
     <div className="i18n-en">
-      <Badge>Research summary · October 2026</Badge>
-      <h1 className="mt-3 text-2xl font-bold sm:text-3xl">
+      <h1 className="text-2xl font-bold sm:text-[32px] sm:leading-tight">
         Young people in Taiwan don&apos;t lack ability. They lack a way to put
         it into words.
       </h1>
-      <p className="mt-3 text-lg text-ink-2">
+      <p className="mt-2 text-sm text-muted">Research summary, October 2026</p>
+      <p className="mt-5 text-lg text-ink-2">
         This research is the basis for every feature in the prototype. In short:
         Taiwan&apos;s overall unemployment is at a 26-year low for the time of
         year, yet unemployment for 20–24-year-olds is still around 11–12%. The
@@ -488,7 +487,7 @@ function ResearchEn() {
         <h2 id="market-en" className="text-xl font-bold">
           1. The market: strong overall, hard for the young
         </h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid gap-x-10 gap-y-7 sm:grid-cols-2">
           {[
             [
               "3.41%",
@@ -511,17 +510,15 @@ function ResearchEn() {
               [21, 22],
             ],
           ].map(([v, d, s]) => (
-            <Card key={v as string}>
-              <CardContent>
-                <p className="font-display text-3xl font-bold text-brand-strong">
-                  {v as string}
-                </p>
-                <p className="mt-1 text-sm text-ink-2">
-                  {d as string}
-                  {cite(...(s as number[]))}
-                </p>
-              </CardContent>
-            </Card>
+            <div key={v as string} className="border-t border-line pt-4">
+              <p className="font-brand text-[34px] font-semibold leading-none tabular-nums text-brand-strong">
+                {v as string}
+              </p>
+              <p className="mt-2 text-sm text-ink-2">
+                {d as string}
+                {cite(...(s as number[]))}
+              </p>
+            </div>
           ))}
         </div>
         <p className="mt-3 text-sm text-muted">
@@ -643,24 +640,30 @@ function ResearchEn() {
         <h2 id="problems-en" className="text-xl font-bold">
           4. Five unsolved problems and the features that answer them
         </h2>
-        <ol className="mt-4 space-y-3">
+        <ol className="mt-5 divide-y divide-line border-y border-line">
           {PROBLEMS_EN.map((p) => (
-            <li key={p.n}>
-              <Card>
-                <CardContent>
-                  <p className="text-xs font-bold text-brand">Problem {p.n}</p>
-                  <h3 className="mt-0.5 text-lg font-semibold">{p.title}</h3>
-                  <p className="mt-2 text-sm text-ink-2">{p.evidence}</p>
-                  <p className="mt-3 text-xs font-bold text-muted">
-                    In the prototype
-                  </p>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
-                    {p.features.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+            <li
+              key={p.n}
+              className="grid gap-x-5 py-6 sm:grid-cols-[2.5rem_1fr]"
+            >
+              <p
+                aria-hidden
+                className="font-brand text-[28px] font-semibold leading-none text-brand"
+              >
+                {p.n}
+              </p>
+              <div>
+                <h3 className="mt-2 text-lg font-bold sm:mt-0">{p.title}</h3>
+                <p className="mt-2 text-sm text-ink-2">{p.evidence}</p>
+                <p className="mt-3 text-xs font-bold text-muted">
+                  In the prototype
+                </p>
+                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
+                  {p.features.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              </div>
             </li>
           ))}
         </ol>
@@ -726,14 +729,12 @@ export default function ResearchPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <div className="i18n-zh">
-        <Badge>研究摘要・2026 年 10 月</Badge>
-        <h1 className="mt-3 text-2xl font-bold sm:text-3xl">
+        <h1 className="text-2xl font-bold sm:text-[32px] sm:leading-tight">
           台灣年輕人不是沒有能力，是沒有機會把自己「說出來」
         </h1>
-        <p className="mt-3 text-lg text-ink-2">
-          這份研究是這個原型每個功能的依據。結論：台灣整體失業率創 26
-          年同期新低，但 20–24 歲青年失業率仍在 11–12%；
-          卡住的不是職缺數量，而是
+        <p className="mt-2 text-sm text-muted">研究摘要，2026 年 10 月</p>
+        <p className="mt-5 text-lg text-ink-2">
+          {"這份研究是這個原型每個功能的依據。結論：台灣整體失業率創 26 年同期新低，但 20–24 歲青年失業率仍在 11–12%；卡住的不是職缺數量，而是"}
           <b className="text-ink">
             面試與自傳的表達，以及完全沒有回饋的求職過程
           </b>
@@ -744,7 +745,7 @@ export default function ResearchPage() {
           <h2 id="market" className="text-xl font-bold">
             1. 市場：全體很好，年輕人很難
           </h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid gap-x-10 gap-y-7 sm:grid-cols-2">
             {[
               [
                 "3.41%",
@@ -767,17 +768,15 @@ export default function ResearchPage() {
                 [21, 22],
               ],
             ].map(([v, d, s]) => (
-              <Card key={v as string}>
-                <CardContent>
-                  <p className="font-display text-3xl font-bold text-brand-strong">
-                    {v as string}
-                  </p>
-                  <p className="mt-1 text-sm text-ink-2">
-                    {d as string}
-                    {cite(...(s as number[]))}
-                  </p>
-                </CardContent>
-              </Card>
+              <div key={v as string} className="border-t border-line pt-4">
+                <p className="font-brand text-[34px] font-semibold leading-none tabular-nums text-brand-strong">
+                  {v as string}
+                </p>
+                <p className="mt-2 text-sm text-ink-2">
+                  {d as string}
+                  {cite(...(s as number[]))}
+                </p>
+              </div>
             ))}
           </div>
           <p className="mt-3 text-sm text-muted">
@@ -892,24 +891,30 @@ export default function ResearchPage() {
           <h2 id="problems" className="text-xl font-bold">
             4. 五個還沒被解決的問題 → 對應功能
           </h2>
-          <ol className="mt-4 space-y-3">
+          <ol className="mt-5 divide-y divide-line border-y border-line">
             {PROBLEMS.map((p) => (
-              <li key={p.n}>
-                <Card>
-                  <CardContent>
-                    <p className="text-xs font-bold text-brand">問題 {p.n}</p>
-                    <h3 className="mt-0.5 text-lg font-semibold">{p.title}</h3>
-                    <p className="mt-2 text-sm text-ink-2">{p.evidence}</p>
-                    <p className="mt-3 text-xs font-bold text-muted">
-                      原型裡的對應功能
-                    </p>
-                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
-                      {p.features.map((f) => (
-                        <li key={f}>{f}</li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+              <li
+                key={p.n}
+                className="grid gap-x-5 py-6 sm:grid-cols-[2.5rem_1fr]"
+              >
+                <p
+                  aria-hidden
+                  className="font-brand text-[28px] font-semibold leading-none text-brand"
+                >
+                  {p.n}
+                </p>
+                <div>
+                  <h3 className="mt-2 text-lg font-bold sm:mt-0">{p.title}</h3>
+                  <p className="mt-2 text-sm text-ink-2">{p.evidence}</p>
+                  <p className="mt-3 text-xs font-bold text-muted">
+                    原型裡的對應功能
+                  </p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-2">
+                    {p.features.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                </div>
               </li>
             ))}
           </ol>

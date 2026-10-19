@@ -17,7 +17,7 @@ export const STAR_EN = {
   s: /\b(when|during|at my|in my|last (year|semester)|once)\b/i,
   t: /\b(responsible|my task|goal|needed to|had to|challenge was)\b/i,
   a: /\b(i (led|built|created|decided|organi[sz]ed|suggested|proposed|designed|started|reached out|set|used|changed))\b/i,
-  r: /\b(result|as a result|finally|increased|reduced|improved|achieved|cut|grew|learned|\d+%)\b/i,
+  r: /\b(result|as a result|finally|increased|reduced|improved|achieved|cut|grew|learned)\b|\d+%/i,
 };
 
 export const STRUCTURE_ZH = /(首先|第一|第二|第三|最後|總結來說|總之|兩個|三個|分成)/g;
@@ -50,7 +50,7 @@ export const CULTURE_KEYWORDS: Record<CompanyType, string[]> = {
 };
 
 /** 有做功課的訊號。只說「貴公司」不算；要提到具體的產品、新聞、官網內容等。 */
-export const RESEARCH_SIGNALS = /(官網|年報|財報|新聞|產品|app|服務|看到你們|看到貴|注意到|研究了|查了|your (product|mission|report|team's)|i noticed|i read|i saw that|i've followed)/i;
+export const RESEARCH_SIGNALS = /(官網|年報|財報|新聞|產品|\bapps?\b|服務|看到你們|看到貴|注意到|研究了|查了|your (product|mission|report|team's)|i noticed|i read|i saw that|i've followed)/i;
 
 /** 履歷／自傳關鍵字 → 客製題。aliases 讓英文履歷也能對應到中文題目。 */
 export const RESUME_LEXICON: { kw: string; kind: "skill" | "exp" | "cert" | "lead"; aliases?: string[] }[] = [
