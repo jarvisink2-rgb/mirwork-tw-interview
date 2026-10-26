@@ -43,7 +43,7 @@ function AnswerItem({ a, index, onRetry, defaultOpen, tr }: { a: AnswerFeedback;
                 </Badge>
               )}
             </span>
-            <span className="phrase mt-1 block font-sans text-base font-bold text-ink [text-wrap:pretty]">{a.questionText}</span>
+            <span className="mt-1 block font-sans text-base font-bold text-ink [text-wrap:pretty]">{a.questionText}</span>
           </span>
           <span className="flex shrink-0 items-center gap-2">
             {a.skipped ? <Badge variant="outline">{tr("略過", "Skipped")}</Badge> : <Badge variant={scoreTone(a.score)}>{a.score}</Badge>}
@@ -93,6 +93,25 @@ function AnswerItem({ a, index, onRetry, defaultOpen, tr }: { a: AnswerFeedback;
                   </li>
                 ))}
               </ul>}
+            </section>
+          )}
+
+          {a.ai && (
+            <section className="rounded-xl border border-brand-line/70 bg-brand-tint/50 px-4 py-3">
+              <h4 className="flex items-center justify-between gap-2 text-sm font-bold text-brand-strong">
+                {tr("Claude 的回饋", "Claude's feedback")}
+                <span className="text-xs font-normal text-muted">{tr("AI 產生，僅供參考", "AI-generated, use with judgement")}</span>
+              </h4>
+              <p className="mt-1.5 text-[15px] text-ink">{a.ai.comment}</p>
+              {a.ai.rewrite && (
+                <details className="group mt-2">
+                  <summary className="flex cursor-pointer list-none items-center gap-1 text-sm font-bold text-brand [&::-webkit-details-marker]:hidden">
+                    {tr("看 Claude 用你的經驗改寫", "See Claude's rewrite of your answer")}
+                    <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+                  </summary>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-ink-2">{a.ai.rewrite}</p>
+                </details>
+              )}
             </section>
           )}
 
@@ -220,6 +239,12 @@ export function ReportView({ session, previous, idPrefix = "" }: { session: Sess
               <span>{tr(`口頭禪 ${report.totalFillers} 次`, `${report.totalFillers} filler word${report.totalFillers === 1 ? "" : "s"}`)}</span>
               {report.avgPace !== null && <span>{tr(`平均語速 ${report.avgPace} 字/分`, `${report.avgPace} wpm average`)}</span>}
             </p>
+            {report.ai?.summary && (
+              <p className="mt-4 max-w-[22rem] border-t border-line-soft pt-3 text-left text-sm text-ink-2">
+                <b className="text-brand-strong">{tr("Claude 總評：", "Claude's take: ")}</b>
+                {report.ai.summary}
+              </p>
+            )}
           </div>
           <RadarChart dims={report.dims} previous={previous?.report.dims} size={280} lang={lang} />
         </CardContent>

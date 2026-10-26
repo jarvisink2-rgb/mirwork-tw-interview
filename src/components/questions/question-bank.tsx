@@ -36,7 +36,7 @@ function QuestionCard({ q, open, onToggle, onPractice, className }: { q: Questio
       <h2 className="m-0 text-base">
         <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full cursor-pointer items-start gap-3 p-4 text-left hover:bg-canvas/60 sm:px-5">
           <span className="min-w-0 flex-1">
-            <span className="phrase block font-sans text-base font-bold leading-snug text-ink [text-wrap:pretty]">{q.text}</span>
+            <span className="block font-sans text-base font-bold leading-snug text-ink [text-wrap:pretty]">{q.text}</span>
             <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
               {q.trap && <Badge variant="bad">{tr("陷阱題", "Trap")}</Badge>}
               {q.category === "group" && <Badge variant="ink">群面</Badge>}

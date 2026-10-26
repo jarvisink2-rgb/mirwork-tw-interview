@@ -105,6 +105,8 @@ export interface AnswerFeedback {
   redFlagIds: string[];
   /** 觸發紅旗的確切字詞，用來在逐字稿上畫線（舊紀錄沒有這個欄位） */
   flagMarks?: string[];
+  /** Claude 寫的回饋（有設定 API key 時才有） */
+  ai?: { comment: string; rewrite: string };
 }
 
 export interface PlanItem {
@@ -125,6 +127,8 @@ export interface Report {
   plan: PlanItem[];
   totalFillers: number;
   avgPace: number | null;
+  /** Claude 的總評（有設定 API key 時才有） */
+  ai?: { model: string; summary: string };
 }
 
 export interface Session {

@@ -710,9 +710,7 @@ function ResearchEn() {
             uses the latest month found in public reports.
           </li>
           <li>
-            Scoring in this prototype is rule-based (pace, filler words, STAR
-            keywords, numbers, red-flag phrases), not an LLM, and has not been
-            calibrated against real HR ratings.
+            {"Scores are rule-based (pace, filler words, STAR keywords, numbers, red-flag phrases) and have not been calibrated against real HR ratings. When the server has an API key, Claude writes the follow-up questions and written feedback; it does not change the scores."}
           </li>
           <li>
             Speech recognition uses the browser&apos;s built-in engine. Chinese
@@ -956,9 +954,7 @@ export default function ResearchPage() {
               主計總處數字是最可靠的骨幹；分齡失業率採用公開報導中最新可查到的月份。
             </li>
             <li>
-              原型的評分是規則式分析（語速、贅字、STAR
-              關鍵詞、數字、紅旗詞彙），不是 LLM 判讀，也還沒有和真實 HR
-              評分做過校準。
+              {"分數是規則式分析（語速、贅字、STAR 關鍵詞、數字、紅旗詞彙），還沒有和真實 HR 評分做過校準。伺服器設定 API key 時，追問和文字回饋由 Claude 撰寫，但不影響分數。"}
             </li>
             <li>
               語音辨識使用瀏覽器內建功能，中文辨識不加標點、偶爾會錯字，所以介面讓使用者送出前修改。

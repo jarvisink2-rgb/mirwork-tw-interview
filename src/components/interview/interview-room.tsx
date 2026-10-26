@@ -55,6 +55,7 @@ export function InterviewRoom() {
   const [typed, setTyped] = useState("");
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [poweredBy, setPoweredBy] = useState<string | null>(null);
   const [ttsOn, setTtsOn] = useState(true);
   const [camOn, setCamOn] = useState(false);
   const [camError, setCamError] = useState(false);
@@ -92,6 +93,7 @@ export function InterviewRoom() {
       setMode(c.mode);
       const ai = await getProvider();
       aiRef.current = ai;
+      setPoweredBy(ai.poweredBy ?? null);
       const qs = await ai.planQuestions(c);
       if (!qs.length) throw new Error("no questions");
       setQuestions(qs);
@@ -511,6 +513,11 @@ export function InterviewRoom() {
             </div>
 
             <p className="mt-4 text-sm text-muted">{tr("緊張很正常，隨時可以暫停或結束。", "Nerves are normal. You can stop at any time.")}</p>
+            {poweredBy && (
+              <p className="mt-2 text-xs text-muted">
+                {tr("Mir 的追問與文字回饋由 Claude 撰寫，分數由規則分析器計算。", "Mir's follow-ups and written feedback come from Claude; scores come from the rule-based analyser.")}
+              </p>
+            )}
             <Button size="xl" className="mt-6 w-full" onClick={begin}>
               {tr("開始面試", "Start interview")}
             </Button>

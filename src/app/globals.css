@@ -76,7 +76,7 @@ h1, h2 { text-wrap: balance; }
 
 /* Chinese headings break at punctuation and spaces (「介紹一下」 never splits as 「介紹一／下」);
    a phrase that is still too long can break anywhere. */
-:is(h1, h2, h3), .phrase {
+:is(h1, h2, h3) {
   word-break: keep-all;
   overflow-wrap: anywhere;
 }

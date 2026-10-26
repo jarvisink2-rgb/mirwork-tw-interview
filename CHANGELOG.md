@@ -8,6 +8,20 @@ Every build was reviewed as three personas, plus mobile (375 px), Lighthouse (mo
 
 ---
 
+## v1.0: Claude as Mir (2026-10-27)
+
+- New server endpoint `/api/mir`. When the Vercel env var `ANTHROPIC_API_KEY` is set, Claude (default `claude-sonnet-5-5`) writes:
+  - Mir's follow-up questions, based on what the candidate actually said
+  - per-answer feedback and a rewrite of the candidate's own answer, without invented facts and with ___ for details to fill in
+  - a two-sentence summary on the report
+- Scores stay rule-based and unchanged. Claude's text is labelled "Claude 的回饋 / AI 產生，僅供參考".
+- Without a key, or on timeout or rate limit, the app silently falls back to the rule-based interviewer. The 3-minute warm-up still never follows up.
+- Safety for a public site: the key stays on the server, inputs are capped (12 answers, 2,000 characters each), there is a per-IP rate limit (40 calls per 10 minutes), and cross-site requests are rejected.
+- Build switched from a static export to a standard Next.js build. Pages are still pre-rendered.
+- Tested end to end against a local stand-in for the Anthropic API: follow-ups appear in the interview, and feedback and summary appear in the report.
+
+---
+
 ## v0.9: Final aesthetic pass (2026-10-19)
 
 **Goal**: remove what still looked templated or AI-made, and make one thing memorable: your own words, marked up the way an interviewer reads them.

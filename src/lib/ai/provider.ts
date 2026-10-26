@@ -29,9 +29,26 @@ export interface InterviewAI {
   }): Promise<string | null>;
   /** Score the whole session and write the feedback report. */
   evaluate(config: InterviewConfig, answers: AnswerRecord[]): Promise<Report>;
+  /** Model name when a real LLM is connected (shown to the user). */
+  poweredBy?: string;
 }
 
-export async function getProvider(): Promise<InterviewAI> {
-  // 之後接真的 LLM：依 process.env.NEXT_PUBLIC_AI_PROVIDER 回傳 httpProvider
-  return mockProvider;
+let cached: Promise<InterviewAI> | null = null;
+
+/** Uses Claude when the server has an API key; otherwise the in-browser mock. */
+export function getProvider(): Promise<InterviewAI> {
+  cached ??= (async () => {
+    try {
+      const res = await fetch("/api/mir/", { cache: "no-store" });
+      const s = res.ok ? ((await res.json()) as { enabled: boolean; model: string | null }) : null;
+      if (s?.enabled && s.model) {
+        const { makeClaudeProvider } = await import("./claude-provider");
+        return makeClaudeProvider(s.model);
+      }
+    } catch {
+      /* offline or static host: fall back */
+    }
+    return mockProvider;
+  })();
+  return cached;
 }

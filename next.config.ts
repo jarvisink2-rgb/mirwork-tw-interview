@@ -1,10 +1,8 @@
 import type { NextConfig } from "next";
 
-// Static export: the whole prototype runs in the browser (mock AI, localStorage),
-// so it can be hosted on Vercel or any static host. When a real LLM / voice API is
-// added, switch to a normal Next.js build and add route handlers under src/app/api.
+// Pages are still pre-rendered as static HTML; the only server code is
+// src/app/api/mir (Claude), which needs ANTHROPIC_API_KEY on Vercel.
 const nextConfig: NextConfig = {
-  output: "export",
   trailingSlash: true,
   images: { unoptimized: true },
 };

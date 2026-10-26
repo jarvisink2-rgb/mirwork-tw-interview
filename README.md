@@ -55,16 +55,27 @@ evaluate(config, answers) → Report                           // the feedback r
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm run build      # static site in ./out
+npm run build && npm start
 ```
 
 ## Deploy to Vercel
 
-Import the repo in Vercel (framework preset: Next.js). No environment variables needed.
+Import the repo in Vercel (framework preset: Next.js). It works with no environment variables.
+
+### Turn on Claude (optional)
+
+In Vercel → Project → Settings → Environment Variables, add:
+
+| Name | Value |
+|---|---|
+| `ANTHROPIC_API_KEY` | your key from console.anthropic.com |
+| `ANTHROPIC_MODEL` (optional) | defaults to `claude-sonnet-5-5` |
+
+Then redeploy. Claude then writes Mir's follow-up questions and the written feedback in each report (`src/app/api/mir/route.ts`). Scores stay rule-based. Without a key, or if a call fails, the app falls back to the built-in rules. Set a monthly spend limit in the Anthropic console, because the site is public.
 
 ## Honest limits of this prototype
 
-- Scoring is rule-based (pace, fillers, STAR keywords, numbers, red-flag phrases), not an LLM, and is not yet calibrated against real HR ratings.
+- Scores are rule-based (pace, fillers, STAR keywords, numbers, red-flag phrases) and not yet calibrated against real HR ratings. With an API key, Claude writes follow-ups and feedback text but does not change scores.
 - Speech recognition uses the browser's built-in service (Chrome sends audio to Google's speech service). In-app browsers (LINE, IG, FB) usually don't support it, so the app falls back to typing.
 - Practice history lives only in the browser's localStorage.
 
