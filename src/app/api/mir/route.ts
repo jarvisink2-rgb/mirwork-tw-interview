@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { execFile } from "node:child_process";
+import os from "node:os";
 
 /**
  * Mir's live brain: Claude writes follow-up questions and personal feedback.
@@ -12,6 +14,9 @@ export const dynamic = "force-dynamic";
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 const key = process.env.ANTHROPIC_API_KEY;
 const client = key ? new Anthropic({ apiKey: key }) : null;
+/** Local demo without an API key: use the Claude Code CLI on this computer (your Claude login). */
+const useCli = !client && process.env.MIR_CLAUDE_CLI === "1";
+const enabled = !!client || useCli;
 
 /* Basic abuse protection for a public demo: per-IP limit (per server instance). */
 const hits = new Map<string, number[]>();
@@ -36,7 +41,19 @@ function parseJSON(text: string) {
   return m ? JSON.parse(m[0]) : null;
 }
 
+function askCli(system: string, user: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      process.env.MIR_CLAUDE_BIN || "claude",
+      ["-p", `${system}\n\n${user}\n\nReply with the JSON only, no other text.`],
+      { cwd: os.tmpdir(), timeout: 120_000, maxBuffer: 1 << 20 },
+      (err, stdout) => (err ? reject(err) : resolve(stdout)),
+    );
+  });
+}
+
 async function ask(system: string, user: string, maxTokens: number) {
+  if (useCli) return askCli(system, user);
   const res = await client!.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
@@ -47,11 +64,11 @@ async function ask(system: string, user: string, maxTokens: number) {
 }
 
 export async function GET() {
-  return Response.json({ enabled: !!client, model: client ? MODEL : null });
+  return Response.json({ enabled, model: client ? MODEL : useCli ? "Claude (Claude Code on this computer)" : null, slow: useCli });
 }
 
 export async function POST(req: Request) {
-  if (!client) return Response.json({ error: "not-configured" }, { status: 503 });
+  if (!enabled) return Response.json({ error: "not-configured" }, { status: 503 });
   const origin = req.headers.get("origin");
   const host = req.headers.get("host");
   if (origin && host && new URL(origin).host !== host) return Response.json({ error: "forbidden" }, { status: 403 });
@@ -94,7 +111,7 @@ export async function POST(req: Request) {
       const out = parseJSON(await ask(persona(lang), user, 3000));
       if (!out || !Array.isArray(out.answers)) return Response.json({ error: "bad-output" }, { status: 502 });
       return Response.json({
-        model: MODEL,
+        model: useCli ? "Claude" : MODEL,
         summary: clip(out.summary, 600),
         answers: answers.map((_, i) => ({ comment: clip(out.answers[i]?.comment, 600), rewrite: clip(out.answers[i]?.rewrite, 1200) })),
       });

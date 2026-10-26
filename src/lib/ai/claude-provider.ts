@@ -25,7 +25,10 @@ async function post<T>(body: unknown, timeoutMs: number): Promise<T | null> {
   }
 }
 
-export function makeClaudeProvider(model: string): InterviewAI {
+export function makeClaudeProvider(model: string, slow = false): InterviewAI {
+  // The local Claude Code CLI takes longer per call than the API.
+  const followUpMs = slow ? 45000 : 8000;
+  const feedbackMs = slow ? 150000 : 30000;
   return {
     ...mockProvider,
     poweredBy: model,
@@ -35,7 +38,7 @@ export function makeClaudeProvider(model: string): InterviewAI {
       // Same pacing rules as before: no follow-ups in the warm-up, one per question (two under pressure).
       const limit = config.difficulty === "pressure" ? 2 : 1;
       if (config.quick || followUpsSoFar >= limit || !answer.trim() || question.category === "closing") return null;
-      const out = await post<{ followUp: string | null }>({ task: "followup", lang: config.lang, context: context(config), question: question.text, answer }, 8000);
+      const out = await post<{ followUp: string | null }>({ task: "followup", lang: config.lang, context: context(config), question: question.text, answer }, followUpMs);
       if (out) return out.followUp;
       return mockProvider.followUp(args);
     },
@@ -49,7 +52,7 @@ export function makeClaudeProvider(model: string): InterviewAI {
           context: context(config),
           answers: report.answers.map((a) => ({ question: a.questionText, transcript: a.skipped ? "" : a.transcript, score: a.score })),
         },
-        30000,
+        feedbackMs,
       );
       if (!out) return report;
       return {

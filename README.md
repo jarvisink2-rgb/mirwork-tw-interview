@@ -58,6 +58,14 @@ npm run dev        # http://localhost:3000
 npm run build && npm start
 ```
 
+## Local demo on a Mac (with Claude)
+
+Double-click `start-demo.command`. It installs packages the first time, then opens http://localhost:3000.
+
+- If the Claude Code CLI (`claude`) is installed and logged in, Mir uses it, so no API key is needed. Each Claude reply takes a few seconds.
+- Or copy `.env.local.example` to `.env.local` and add `ANTHROPIC_API_KEY`.
+- With neither, Mir uses the built-in rules.
+
 ## Deploy to Vercel
 
 Import the repo in Vercel (framework preset: Next.js). It works with no environment variables.

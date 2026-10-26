@@ -40,10 +40,10 @@ export function getProvider(): Promise<InterviewAI> {
   cached ??= (async () => {
     try {
       const res = await fetch("/api/mir/", { cache: "no-store" });
-      const s = res.ok ? ((await res.json()) as { enabled: boolean; model: string | null }) : null;
+      const s = res.ok ? ((await res.json()) as { enabled: boolean; model: string | null; slow?: boolean }) : null;
       if (s?.enabled && s.model) {
         const { makeClaudeProvider } = await import("./claude-provider");
-        return makeClaudeProvider(s.model);
+        return makeClaudeProvider(s.model, !!s.slow);
       }
     } catch {
       /* offline or static host: fall back */
